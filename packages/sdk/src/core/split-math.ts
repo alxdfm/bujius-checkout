@@ -3,7 +3,7 @@ import { BujiusCheckoutError, ErrorCode } from '../errors';
 /**
  * One rule, three places (contracts §2): share[i] = floor(amount × bps[i] / 10_000);
  * merchant gets the remainder. bigint intermediates cover the u64 × bps product.
- * Bps that cannot belong to a valid config throw `CONFIG_NOT_FOUND`, so the invariant
+ * Bps that are negative, fractional or sum above 10_000 throw `CONFIG_NOT_FOUND`, so
  * merchant + Σ share = amount never holds through a negative merchant amount.
  */
 export function computeSplit(

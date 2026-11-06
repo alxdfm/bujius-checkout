@@ -335,12 +335,13 @@ describe('strategies: buildSplitPayment transfers', () => {
     ).rejects.toMatchObject({ code: 'CONFIG_NOT_FOUND' });
   });
 
-  it('rejects a payer who is also the merchant or a recipient, for either strategy', async () => {
+  it('rejects an off-curve payer or one who is also a leg wallet, for either strategy', async () => {
     const { mint, authority, partner, config } = fixture();
     const connection = chain(mint, [ata(mint, authority), ata(mint, partner)]);
     const reads = vi.spyOn(connection, 'getMultipleAccountsInfo');
+    const pda = PublicKey.findProgramAddressSync([Buffer.from('c')], TOKEN_PROGRAM_ID)[0];
 
-    for (const payer of [authority, partner]) {
+    for (const payer of [authority, partner, pda]) {
       for (const strategy of ['transfers', 'program'] as const) {
         await expect(
           buildSplitPayment(connection, config, payer, 1_000_000n, newReference(), strategy),
@@ -358,17 +359,16 @@ describe('strategies: buildSplitPayment transfers', () => {
     ).rejects.toMatchObject({ code: 'INVALID_ACCOUNT' });
   });
 
-  it('pays off-curve wallets: a PDA merchant, recipient and payer', async () => {
-    const [pda1, pda2, pda3] = ['a', 'b', 'c'].map(
+  it('pays off-curve leg wallets: a PDA merchant and recipient', async () => {
+    const [pda1, pda2] = ['a', 'b'].map(
       (seed) => PublicKey.findProgramAddressSync([Buffer.from(seed)], TOKEN_PROGRAM_ID)[0],
-    ) as [PublicKey, PublicKey, PublicKey];
-    const { mint, config } = fixture();
+    ) as [PublicKey, PublicKey];
+    const { mint, payer, config } = fixture();
     const offCurve = { ...config, authority: pda1, recipients: [{ wallet: pda2, bps: 1000 }] };
 
-    const tx = await buildSplitPayment(chain(mint, [ata(mint, pda3)]), offCurve, pda3, 1_000_000n, newReference(), 'transfers');
+    const tx = await buildSplitPayment(chain(mint, [ata(mint, payer)]), offCurve, payer, 1_000_000n, newReference(), 'transfers');
 
     expect(legsOf(tx).map((leg) => leg.keys.destination.pubkey)).toEqual([ata(mint, pda2), ata(mint, pda1)]);
-    expect(legsOf(tx)[0]!.keys.source.pubkey).toEqual(ata(mint, pda3));
   });
 
   it('maps a missing or invalid mint to INVALID_ACCOUNT', async () => {

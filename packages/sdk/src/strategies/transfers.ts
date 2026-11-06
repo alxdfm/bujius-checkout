@@ -4,11 +4,7 @@ import {
   getAssociatedTokenAddressSync,
   unpackMint,
 } from '@solana/spl-token';
-import {
-  Transaction,
-  type Connection,
-  type PublicKey,
-} from '@solana/web3.js';
+import { PublicKey, Transaction, type Connection } from '@solana/web3.js';
 import { computeSplit } from '../core/split-math';
 import { BujiusCheckoutError, ErrorCode } from '../errors';
 import type { SplitConfig } from '../program/config';
@@ -23,6 +19,7 @@ const U64_MAX = 18_446_744_073_709_551_615n;
  * An amount outside 1..=u64::MAX throws `INVALID_AMOUNT` for either strategy.
  * A payer who is also a leg's wallet throws `INVALID_ACCOUNT` for either strategy: its balance
  * would not rise by that leg's amount, so the verifier could never mark the payment paid.
+ * An off-curve payer throws `INVALID_ACCOUNT` too: it has no private key to sign with.
  */
 export async function buildSplitPayment(
   connection: Connection,
@@ -36,6 +33,7 @@ export async function buildSplitPayment(
     throw new BujiusCheckoutError(ErrorCode.INVALID_AMOUNT);
   }
   if (
+    !PublicKey.isOnCurve(payer) ||
     payer.equals(config.authority) ||
     config.recipients.some((r) => r.wallet.equals(payer))
   ) {
@@ -73,7 +71,7 @@ async function buildTransfersPayment(
     legs.push({ wallet: config.authority, amount: merchant });
   }
 
-  // A wallet may be a PDA or a multisig vault: contracts §1 has no on-curve rule.
+  // A leg's wallet may be a PDA or a multisig vault: contracts §1 has no on-curve rule.
   const ataOf = (wallet: PublicKey) =>
     getAssociatedTokenAddressSync(config.mint, wallet, true);
   const destAtas = legs.map((leg) => ataOf(leg.wallet));
