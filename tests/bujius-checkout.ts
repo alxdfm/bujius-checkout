@@ -197,4 +197,163 @@ describe("bujius-checkout · create_split", () => {
     }
     expect(failed).to.equal(true);
   });
+
+  describe("pay", () => {
+    const ATA_PROGRAM = new PublicKey(
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+    );
+    let payMint: PublicKey;
+
+    const ata = (owner: PublicKey, m = payMint) =>
+      PublicKey.findProgramAddressSync(
+        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), m.toBuffer()],
+        ATA_PROGRAM
+      )[0];
+
+    // Creates the ATAs (idempotent) and optionally mints to the first owner
+    async function setupAtas(owners: PublicKey[], m: PublicKey, mintTo?: bigint) {
+      const tx = new Transaction();
+      for (const owner of owners) {
+        tx.add(
+          new TransactionInstruction({
+            programId: ATA_PROGRAM,
+            keys: [
+              { pubkey: authority.publicKey, isSigner: true, isWritable: true },
+              { pubkey: ata(owner, m), isSigner: false, isWritable: true },
+              { pubkey: owner, isSigner: false, isWritable: false },
+              { pubkey: m, isSigner: false, isWritable: false },
+              { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+              { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            ],
+            data: Buffer.from([1]),
+          })
+        );
+      }
+      if (mintTo) {
+        const data = Buffer.alloc(9);
+        data[0] = 7; // MintTo
+        data.writeBigUInt64LE(mintTo, 1);
+        tx.add(
+          new TransactionInstruction({
+            programId: TOKEN_PROGRAM_ID,
+            keys: [
+              { pubkey: m, isSigner: false, isWritable: true },
+              { pubkey: ata(owners[0], m), isSigner: false, isWritable: true },
+              { pubkey: authority.publicKey, isSigner: true, isWritable: false },
+            ],
+            data,
+          })
+        );
+      }
+      await provider.sendAndConfirm(tx);
+    }
+
+    const balance = async (owner: PublicKey) =>
+      BigInt(
+        (await provider.connection.getTokenAccountBalance(ata(owner))).value.amount
+      );
+
+    // A fresh config with its recipients; the payer (authority) is funded
+    async function scenario(bps: number[]) {
+      const id = nextId++;
+      const recipients = bps.map((b) => ({ wallet: wallet(), bps: b }));
+      mint = payMint;
+      await create(id, recipients);
+      await setupAtas(
+        [authority.publicKey, ...recipients.map((r) => r.wallet)],
+        payMint,
+        100_000_000n
+      );
+      return { id, recipients };
+    }
+
+    function pay(
+      id: number,
+      amount: bigint,
+      rest: PublicKey[],
+      overrides: Partial<{ mint: PublicKey; merchantToken: PublicKey }> = {}
+    ) {
+      return program.methods
+        .pay(new anchor.BN(amount.toString()))
+        .accountsPartial({
+          payer: authority.publicKey,
+          payerToken: ata(authority.publicKey),
+          config: configPda(id),
+          mint: overrides.mint ?? payMint,
+          merchantToken: overrides.merchantToken ?? ata(authority.publicKey),
+          reference: wallet(),
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .remainingAccounts(
+          rest.map((pubkey) => ({ pubkey, isSigner: false, isWritable: true }))
+        )
+        .rpc();
+    }
+
+    before(async () => {
+      payMint = await createMint();
+    });
+
+    // Vectors of contracts §2: [amount, bps, shares, merchant]
+    const vectors: [bigint, number[], bigint[], bigint][] = [
+      [1_000_000n, [500], [50_000n], 950_000n],
+      [1_000_001n, [333, 333], [33_300n, 33_300n], 933_401n],
+      [1n, [500], [0n], 1n],
+      [10_000n, [10_000], [10_000n], 0n],
+    ];
+    for (const [amount, bps, shares, merchant] of vectors) {
+      it(`splits ${amount} over [${bps}] and keeps the invariant`, async () => {
+        const { id, recipients } = await scenario(bps);
+        const before = await balance(authority.publicKey);
+        await pay(id, amount, recipients.map((r) => ata(r.wallet)));
+        for (let i = 0; i < recipients.length; i++) {
+          expect(await balance(recipients[i].wallet)).to.equal(shares[i]);
+        }
+        const merchantDelta = (await balance(authority.publicKey)) - before;
+        // the payer is the merchant here: net change is -(amount - merchant)
+        expect(merchantDelta).to.equal(merchant - amount);
+        expect(merchant + shares.reduce((a, b) => a + b, 0n)).to.equal(amount);
+      });
+    }
+
+    it("rejects a zero amount with ZeroAmount", async () => {
+      const { id, recipients } = await scenario([500]);
+      await expectError(pay(id, 0n, recipients.map((r) => ata(r.wallet))), "ZeroAmount");
+    });
+
+    it("rejects another mint with MintMismatch", async () => {
+      const { id, recipients } = await scenario([500]);
+      const other = await createMint();
+      await expectError(
+        pay(id, 1000n, recipients.map((r) => ata(r.wallet)), { mint: other }),
+        "MintMismatch"
+      );
+    });
+
+    it("rejects a wrong merchant token account with BadTokenAccount", async () => {
+      const { id, recipients } = await scenario([500]);
+      await expectError(
+        pay(id, 1000n, recipients.map((r) => ata(r.wallet)), {
+          merchantToken: ata(recipients[0].wallet),
+        }),
+        "BadTokenAccount"
+      );
+    });
+
+    it("rejects a missing recipient with RecipientCountMismatch", async () => {
+      const { id, recipients } = await scenario([500, 300]);
+      await expectError(
+        pay(id, 1000n, [ata(recipients[0].wallet)]),
+        "RecipientCountMismatch"
+      );
+    });
+
+    it("rejects recipients in the wrong order with BadTokenAccount", async () => {
+      const { id, recipients } = await scenario([500, 300]);
+      await expectError(
+        pay(id, 1000n, [ata(recipients[1].wallet), ata(recipients[0].wallet)]),
+        "BadTokenAccount"
+      );
+    });
+  });
 });
