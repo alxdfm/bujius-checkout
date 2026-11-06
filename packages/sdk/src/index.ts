@@ -14,3 +14,10 @@ export type { PaymentStrategy } from './strategies/transfers';
 export { findPayment } from './verify/find-payment';
 export { verifySplitPayment } from './verify/verify-payment';
 export type { Verification, VerifiedLeg } from './verify/verify-payment';
+// Track B — the transaction request handler (B2)
+export { createTransactionRequestHandler } from './server/handler';
+export type {
+  ResolvedPayment,
+  ResolveResult,
+  TransactionRequestOptions,
+} from './server/handler';

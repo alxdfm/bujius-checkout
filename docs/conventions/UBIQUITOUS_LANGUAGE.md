@@ -32,7 +32,7 @@
 | **reference** | A fresh public key added to the payment as a readonly account, so the payment can be found by it | `reference` |
 | **transaction request** | The Solana Pay flow where the wallet asks an HTTPS endpoint for the transaction | `paymentUrl`, the handler |
 | **handler** | The SDK's transaction request endpoint the store hosts | `createTransactionRequestHandler` |
-| **resolve** | The store's callback that turns the URL's last segment into `{ config, amount, reference, message }` or an error code | `resolve(key)` |
+| **resolve** | The store's callback that turns the URL's last segment and the payer's account into `{ config, amount, reference, message }` or an error code | `resolve(key, account)` |
 
 ## Orders, charges, status
 

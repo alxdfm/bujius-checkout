@@ -142,8 +142,10 @@ verifier guarantees the amount** — anyone holding the reference can send anoth
 ## 4. The transaction request — HTTP
 
 `createTransactionRequestHandler({ connection, label, iconUrl, strategy, resolve })`.
-`resolve(key)` gets the last path segment of the request URL and returns either
-`{ config, amount, reference, message }` or `{ error: ErrorCode }`.
+`resolve(key, account)` gets the last path segment of the request URL and the payer's parsed
+account, and returns either `{ config, amount, reference, message }` or `{ error: ErrorCode }`.
+A `resolve` with no hold ignores `account`. The account is read first: a malformed one gets `400`
+without reaching `resolve`.
 
 | Request | Response |
 |---|---|
@@ -165,6 +167,9 @@ Errors use the spec's envelope, `{ "error": "<sentence>" }` — the wallet shows
 | `ORDER_PAID` | 409 | "This order is already paid." |
 | `ORDER_EXPIRED` | 410 | "This order expired. Go back to the store and start again." |
 | `RPC_UNAVAILABLE` | 503 | "The network is busy. Try again in a moment." |
+| any other error | 500 | "This order cannot be paid. Go back to the store." |
+
+A method other than `GET`, `POST` or `OPTIONS` gets `405` and "This request is not supported."
 
 ### The demo store's routes (no database)
 
