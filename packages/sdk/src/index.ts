@@ -11,3 +11,4 @@ export { paymentUrl } from './core/url';
 export { computeSplit } from './core/split-math';
 export { buildSplitPayment } from './strategies/transfers';
 export type { PaymentStrategy } from './strategies/transfers';
+export { findPayment } from './verify/find-payment';

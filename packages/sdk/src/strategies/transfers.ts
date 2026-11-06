@@ -8,6 +8,7 @@ import { PublicKey, Transaction, type Connection } from '@solana/web3.js';
 import { computeSplit } from '../core/split-math';
 import { BujiusCheckoutError, ErrorCode } from '../errors';
 import type { SplitConfig } from '../program/config';
+import { buildProgramPayment } from './program';
 
 export type PaymentStrategy = 'program' | 'transfers';
 
@@ -15,7 +16,7 @@ const U64_MAX = 18_446_744_073_709_551_615n;
 
 /**
  * Builds an unsigned legacy split payment. Fee payer = payer; blockhash at `confirmed`.
- * `'transfers'` is implemented here; `'program'` is filled by A4.
+ * `'transfers'` is implemented here; `'program'` lives in `program.ts` (A4).
  * An amount outside 1..=u64::MAX throws `INVALID_AMOUNT` for either strategy.
  * A payer who is also a leg's wallet throws `INVALID_ACCOUNT` for either strategy: its balance
  * would not rise by that leg's amount, so the verifier could never mark the payment paid.
@@ -40,7 +41,7 @@ export async function buildSplitPayment(
     throw new BujiusCheckoutError(ErrorCode.INVALID_ACCOUNT);
   }
   if (strategy === 'program') {
-    throw new Error('program strategy not implemented');
+    return buildProgramPayment(connection, config, payer, amount, reference);
   }
   if (strategy !== 'transfers') {
     throw new Error(`unknown payment strategy: ${String(strategy)}`);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
+import { BorshAccountsCoder, BorshInstructionCoder, type Idl } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   MINT_SIZE,
@@ -14,6 +14,7 @@ import {
   ErrorCode,
   buildSplitPayment,
   fetchSplitConfig,
+  findPayment,
   findSplitConfig,
   computeSplit,
   fromBaseUnits,
@@ -287,7 +288,7 @@ describe('strategies: buildSplitPayment transfers', () => {
     }
   });
 
-  it('skips a zero leg and throws for the program strategy until A4', async () => {
+  it('skips a zero leg', async () => {
     const { mint, authority, partner, payer, config } = fixture(500);
     const connection = chain(mint, [ata(mint, payer), ata(mint, authority)]);
 
@@ -301,10 +302,6 @@ describe('strategies: buildSplitPayment transfers', () => {
     const partnerOnly = await buildSplitPayment(connection, allToPartner, payer, 10_000n, newReference(), 'transfers');
     expect(legsOf(partnerOnly).map((leg) => leg.keys.destination.pubkey)).toEqual([ata(mint, partner)]);
     expect(legsOf(partnerOnly).map((leg) => leg.data.amount)).toEqual([10_000n]);
-
-    await expect(
-      buildSplitPayment(connection, config, payer, 1n, newReference(), 'program'),
-    ).rejects.toThrow(/program strategy not implemented/);
   });
 
   it('rejects an amount outside 1..=u64::MAX before any RPC call', async () => {
@@ -394,5 +391,48 @@ describe('strategies: buildSplitPayment transfers', () => {
         buildSplitPayment(respond(mintInfo), config, payer, 1_000_000n, newReference(), 'transfers'),
       ).rejects.toMatchObject({ code: 'INVALID_ACCOUNT' });
     }
+  });
+
+  it('program strategy: creates only missing funded ATAs, then pay with recipients in order', async () => {
+    const { mint, authority, partner, payer, config } = fixture();
+    const reference = newReference();
+    const connection = chain(mint, [ata(mint, payer), ata(mint, authority)]);
+
+    const tx = await buildSplitPayment(connection, config, payer, 1_000_000n, reference, 'program');
+
+    expect(tx.feePayer?.equals(payer)).toBe(true);
+    expect(createsOf(tx).map((ix) => ix.keys[1]!.pubkey)).toEqual([ata(mint, partner)]);
+    const pay = tx.instructions.at(-1)!;
+    expect(pay.programId.equals(PROGRAM_ID)).toBe(true);
+    const decoded = new BorshInstructionCoder(idl as Idl).decode(pay.data)!;
+    expect(decoded.name).toBe('pay');
+    expect(String((decoded.data as { amount: { toString(): string } }).amount)).toBe('1000000');
+    const keys = pay.keys;
+    expect(keys[0]).toMatchObject({ isSigner: true });
+    expect(keys[1]!.pubkey.equals(ata(mint, payer))).toBe(true);
+    expect(keys[2]!.pubkey.equals(config.address)).toBe(true);
+    expect(keys[4]!.pubkey.equals(ata(mint, authority))).toBe(true);
+    expect(keys[5]).toMatchObject({ isSigner: false, isWritable: false });
+    expect(keys[5]!.pubkey.equals(reference)).toBe(true);
+    expect(keys[7]!.pubkey.equals(ata(mint, partner))).toBe(true);
+    expect(keys).toHaveLength(8);
+  });
+
+  it('program strategy: does not create the ATA of a zero leg', async () => {
+    const { mint, payer, config } = fixture(500);
+    const tx = await buildSplitPayment(chain(mint, [ata(mint, payer)]), config, payer, 1n, newReference(), 'program');
+    // partner share is 0: only the merchant's ATA is created
+    expect(createsOf(tx)).toHaveLength(1);
+  });
+
+  it('findPayment returns the earliest successful signature or null', async () => {
+    const find = (sigs: { signature: string; err: unknown }[]) =>
+      findPayment({ getSignaturesForAddress: async () => sigs } as unknown as Connection, key());
+    expect(await find([])).toBeNull();
+    expect(await find([{ signature: 'b', err: null }, { signature: 'a', err: { x: 1 } }])).toBe('b');
+    expect(await find([{ signature: 'new', err: null }, { signature: 'old', err: null }])).toBe('old');
+    await expect(
+      findPayment({ getSignaturesForAddress: async () => { throw new Error('x'); } } as unknown as Connection, key()),
+    ).rejects.toMatchObject({ code: 'RPC_UNAVAILABLE' });
   });
 });
