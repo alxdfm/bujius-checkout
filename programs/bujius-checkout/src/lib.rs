@@ -21,4 +21,8 @@ pub mod bujius_checkout {
     ) -> Result<()> {
         instructions::create_split::handler(ctx, id, recipients)
     }
+
+    pub fn pay<'info>(ctx: Context<'_, '_, 'info, 'info, Pay<'info>>, amount: u64) -> Result<()> {
+        instructions::pay::handler(ctx, amount)
+    }
 }
