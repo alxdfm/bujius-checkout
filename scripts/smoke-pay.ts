@@ -1,4 +1,4 @@
-// Devnet smoke: build → sign → send → findPayment, then print each leg's balance change.
+// Devnet smoke: build → sign → send → findPayment → verifySplitPayment, then each leg's change.
 // Usage: pnpm smoke --strategy program|transfers
 // Env: PAYER_KEYPAIR (path), SPLIT_CONFIG (address), RPC_URL (optional), AMOUNT (optional, default 0.10)
 import { readFileSync } from 'node:fs';
@@ -10,6 +10,7 @@ import {
   findPayment,
   newReference,
   toBaseUnits,
+  verifySplitPayment,
   type PaymentStrategy,
 } from '../packages/sdk/src';
 
@@ -61,6 +62,11 @@ async function main() {
   }
   if (found !== signature) throw new Error(`findPayment did not return ${signature}`);
 
+  // Only the verifier decides: findPayment alone never means paid
+  const verdict = await verifySplitPayment(connection, found, config, amount, reference);
+  if (verdict.status !== 'paid') {
+    throw new Error(`Verifier says ${verdict.status}: ${verdict.reason ?? ''}`);
+  }
   console.log(`PAID ${found}`);
   const after = await balances();
   wallets.forEach((wallet, i) => {
