@@ -14,14 +14,12 @@
   `LNv2EvYZFN1fBJeQPDGffRxVYPMCGpa99yCcWDSDdjN`. Its keypair is backed up outside the
   repository. `programs/bujius-checkout/src/lib.rs` and `tests/bujius-checkout.ts` are still
   Anchor's template — `A1` replaces them.
-- The local `pre-push` hook needs `rg` (ripgrep), which is not installed here — until it is, the
-  `PLAN.md` §1 check must be run by hand with `grep`.
+- Track B has been told the workspace is on `main` and is in the GitHub organisation.
 
 ## Next
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | tell B the workspace is on `main` | now |
 | A | `A1` program: `SplitConfig`, `create_split` | Fri 15:00–18:00 |
 | B | Vercel project, Neon database; then `B1` SDK core and the transfers strategy | now → Fri 15:00–18:00 |
 
