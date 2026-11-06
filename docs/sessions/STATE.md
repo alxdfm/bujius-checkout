@@ -9,6 +9,9 @@
 
 - **`B1` is done** and on `main`: `toBaseUnits`, `fromBaseUnits`, `newReference`, `paymentUrl`,
   `computeSplit`, `buildSplitPayment` with `strategy: 'transfers'`.
+- **`A5` is done:** `verifySplitPayment(connection, signature, config, amount, reference, expiresAt?)`
+  judges by balances (`expiresAt` is a `Date`); fixtures in `packages/sdk/__tests__/fixtures/`;
+  `pnpm smoke` prints `PAID` from the verifier. B may now render `Paid` from it.
 - **`A4` is done and the cut passed:** `pnpm smoke --strategy program` and `--strategy transfers`
   both print `PAID` on devnet (0.10 USDC: merchant 87 500, partner 10 000, platform 2 500). The
   worst-case `pay` transaction is 790 bytes (limit 1232). **Tell B: `PAY_STRATEGY=program`.**
@@ -26,7 +29,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A5` the verifier | Sat 09:00–11:30 |
+| A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
 | B | `B2` the transaction request handler; **read *Noticed* first** | Fri 18:00–19:30 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
