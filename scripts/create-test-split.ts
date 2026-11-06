@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { buildCreateSplit, fetchSplitConfig, findSplitConfig } from '../packages/sdk/src';
 
-const DEVNET_USDC = '4zMMC9srt5Ri5X14GAgXhaHii3GfPNfGaLBFu9qZpZH2';
+const DEVNET_USDC = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 const CONFIG_ID = 1;
 
 function need(name: string): string {
