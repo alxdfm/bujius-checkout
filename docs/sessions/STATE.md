@@ -7,6 +7,8 @@
 
 ## Where we are
 
+- **`B1` is done** and on `main`: `toBaseUnits`, `fromBaseUnits`, `newReference`, `paymentUrl`,
+  `computeSplit`, `buildSplitPayment` with `strategy: 'transfers'`.
 - **`A1`, `A2` and `A3` are done** and merged on `main` (`SplitConfig`, `create_split`, `pay`;
   `anchor test` 19 passing, program deployed on devnet, `pnpm verify` green). `tests/bujius-checkout.ts` is at 359 lines —
   split it before it passes 400.
@@ -21,8 +23,8 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A4` SDK program strategy, `findPayment`, smoke, tx size — needs `B1` on `main`; **read *Noticed* first** | Fri 23:00–02:00 |
-| B | Vercel project, Neon database; then `B1` SDK core and the transfers strategy | now → Fri 15:00–18:00 |
+| A | `A4` SDK program strategy, `findPayment`, smoke, tx size; **read *Noticed* first** | Fri 23:00–02:00 |
+| B | `B2` the transaction request handler; **read *Noticed* first** | Fri 18:00–19:30 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
@@ -44,12 +46,27 @@
   from B: add the file to `A4`'s list, for this one change only — replace that `throw` with the
   call to the program builder, and update the test
   `skips a zero leg and throws for the program strategy until A4`. Amount validation already
-  runs before the strategy check (`INVALID_AMOUNT` outside 1..=u64::MAX), so `program.ts` does
-  not repeat it. Delete this note once `A4` settles it.
+  runs before the strategy check (`INVALID_AMOUNT` outside 1..=u64::MAX), and so does the check
+  that the payer is not a leg's wallet (`INVALID_ACCOUNT`), so `program.ts` repeats neither. Delete
+  this note once `A4` settles it.
+- **`buildCreateSplit` rejects off-curve recipients; `buildSplitPayment` accepts them.**
+  `program/create-split.ts` derives ATAs with the default `allowOwnerOffCurve = false`, so a PDA
+  or multisig recipient throws there. Owner: A.
+- **A demo payer must be its own wallet.** `buildSplitPayment` refuses a payer who is the merchant
+  or a recipient: the verifier could never mark that payment paid. On camera and in `B3`, pay
+  from a wallet with USDC that is in neither role.
+- **For `B2`:** `computeSplit` throws `CONFIG_NOT_FOUND` for bps no config can hold, and the builder
+  throws `INVALID_AMOUNT` for an amount out of range. Neither code is in the contracts §4 table, so
+  the handler has no status or sentence for them yet; agree one before `B2` ends. A payer with no
+  token account, or who is a leg's wallet, gets `INVALID_ACCOUNT`.
+- **Deferred from the `B1` review:** `toBaseUnits` has no upper bound · a missing mint reports
+  `INVALID_ACCOUNT`, whose sentence blames the payer · `fromBaseUnits` trims to `12.5`, so screens
+  pad to two decimals themselves · `paymentUrl` accepts `http://` and throws an untyped `TypeError`
+  on a bad URL · the builder's `program` and unknown-strategy branches throw plain `Error`s.
 - **`pnpm verify` on Windows skips the build and the lint and still exits 0.** The single quotes
   in `--filter './packages/*'` and `--filter './apps/*'` (root `package.json`) match no project
   there ("No projects matched"). Until fixed, run
   `pnpm --filter "./packages/*" --if-present run build` by hand on Windows.
-- **`packages/sdk/__tests__/unit.test.ts` is at 395 lines of the 400 limit.** `B2` and `A4` both
+- **`packages/sdk/__tests__/unit.test.ts` is at 398 lines of the 400 limit.** `B2` and `A4` both
   append to it, and splitting it is on no card. The tracks have to agree who splits it, and how,
   before `B2`.
