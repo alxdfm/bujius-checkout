@@ -7,8 +7,9 @@
 
 ## Where we are
 
-- **`A1` is done** on branch `a/a1-create-split` (`SplitConfig`, `create_split`; `anchor test`
-  10 passing, `pnpm verify` green). `lib.rs` and the tests are no longer Anchor's template.
+- **`A1` and `A2` are done** and merged on `main` (`SplitConfig`, `create_split`, `pay`;
+  `anchor test` 19 passing, `pnpm verify` green). `tests/bujius-checkout.ts` is at 359 lines —
+  split it before it passes 400.
 - **`A0` is done.** The workspace is on `main` at https://github.com/alxdfm/bujius-checkout and
   CI (`pnpm verify`) is green. `pnpm verify` exits 0; `anchor build` passes on the template
   program.
@@ -20,7 +21,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A2` program: `pay` | Fri 18:00–21:30 |
+| A | `A3` devnet deploy, IDL in the SDK, test config | Fri 21:30–23:00 |
 | B | Vercel project, Neon database; then `B1` SDK core and the transfers strategy | now → Fri 15:00–18:00 |
 
 ## Open
