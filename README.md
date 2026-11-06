@@ -10,7 +10,7 @@ primitive for Bujius Pay, during the MLH Solana Hackathon (November 2026). Devne
 
 | | |
 |---|---|
-| Program (devnet) | not deployed yet |
+| Program (devnet) | `LNv2EvYZFN1fBJeQPDGffRxVYPMCGpa99yCcWDSDdjN` |
 | `@bujius/checkout-sdk` | not published yet |
 | `@bujius/checkout-react` | not published yet |
 
