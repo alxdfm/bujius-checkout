@@ -1,0 +1,24 @@
+# Anchor / Rust
+.anchor
+target
+**/*.rs.bk
+test-ledger
+
+# Node
+node_modules
+dist
+.next
+.turbo
+*.tsbuildinfo
+.vercel
+
+# Secrets — keypairs and env files never enter git
+*.keypair.json
+*-keypair.json
+id.json
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
