@@ -9,6 +9,9 @@
 
 - **`B1` is done** and on `main`: `toBaseUnits`, `fromBaseUnits`, `newReference`, `paymentUrl`,
   `computeSplit`, `buildSplitPayment` with `strategy: 'transfers'`.
+- **`A4` is done and the cut passed:** `pnpm smoke --strategy program` and `--strategy transfers`
+  both print `PAID` on devnet (0.10 USDC: merchant 87 500, partner 10 000, platform 2 500). The
+  worst-case `pay` transaction is 790 bytes (limit 1232). **Tell B: `PAY_STRATEGY=program`.**
 - **`A1`, `A2` and `A3` are done** and merged on `main` (`SplitConfig`, `create_split`, `pay`;
   `anchor test` 19 passing, program deployed on devnet, `pnpm verify` green). `tests/bujius-checkout.ts` is at 359 lines —
   split it before it passes 400.
@@ -23,7 +26,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A4` SDK program strategy, `findPayment`, smoke, tx size; **read *Noticed* first** | Fri 23:00–02:00 |
+| A | `A5` the verifier | Sat 09:00–11:30 |
 | B | `B2` the transaction request handler; **read *Noticed* first** | Fri 18:00–19:30 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
@@ -39,15 +42,6 @@
 ## Noticed (outside any card)
 
 - `anchor` needs `~/.local/share/solana/install/active_release/bin` on `PATH`.
-- **`A4` — open question. Agent: ask Alexandre before starting this card.** `buildSplitPayment`
-  lives in `packages/sdk/src/strategies/transfers.ts` (owned by B) and throws
-  `program strategy not implemented` for `'program'`, but that file is not on `A4`'s **Touch
-  only these files** list, so `A4` cannot connect `strategies/program.ts` as written. Proposal
-  from B: add the file to `A4`'s list, for this one change only — replace that `throw` with the
-  call to the program builder, and update the test
-  `skips a zero leg and throws for the program strategy until A4`. Amount and payer validation
-  already run before the strategy check, so `program.ts` repeats neither. Delete this note once
-  `A4` settles it.
 - **`buildCreateSplit` rejects off-curve recipients; `buildSplitPayment` accepts them.**
   `program/create-split.ts` uses the default `allowOwnerOffCurve = false`. Owner: A.
 - **A demo payer must be its own wallet.** `buildSplitPayment` refuses a payer who is the merchant
