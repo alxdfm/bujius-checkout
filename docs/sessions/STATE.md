@@ -7,6 +7,9 @@
 
 ## Where we are
 
+- **`B3`'s code is on `main`, the card is not done:** `apps/demo-store` and `PaymentQR` run locally
+  against devnet. Still to do: the Vercel deploy and the first phone payment. The QR has not been
+  seen in a browser yet.
 - **`B2` is done** and on `main`: `createTransactionRequestHandler`, with `resolve(key, account)`.
   Not yet called by a real wallet: that is `B3`.
 - **`B1` is done** and on `main`: `toBaseUnits`, `fromBaseUnits`, `newReference`, `paymentUrl`,
@@ -32,7 +35,7 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
-| B | `B3` demo store v1, the QR, the first phone payment; **read *Noticed* first** | Fri 19:30–21:30 |
+| B | `B3`: Vercel deploy from `main` (root `apps/demo-store`) and the first phone payment; **read *Noticed* first** | Fri 19:30–21:30 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
@@ -60,7 +63,10 @@
   `pnpm --filter "./packages/*" --if-present run build` by hand on Windows.
 - **The SDK's ESM bundle does not load in Node.** `strategies/program.ts` has
   `import { BN, … } from '@coral-xyz/anchor'`, and Node refuses it: "Named export 'BN' not found".
-  The CJS bundle loads, and `pnpm verify` does not catch it. Owner: A. `B3` may hit it.
+  The CJS bundle loads, and `pnpm verify` does not catch it. The demo store's Next build bundles
+  it and is not affected; a direct Node import is. Owner: A.
+- **`apps/demo-store` has no `lint` script.** `eslint` is not in `PLAN.md` §5, so the lint step of
+  `pnpm verify` does nothing for it. The tracks have to decide whether to add it.
 - **For `A9`:** `resolve` now gets `(key, account)`, so the hold can compare the payer, and it runs
   before `buildSplitPayment`. A payer the builder then refuses (no token account, a leg's wallet,
   off-curve) has already taken the hold, and the real payer would get `ORDER_HELD`. Check before
