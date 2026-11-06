@@ -21,7 +21,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A4` SDK program strategy, `findPayment`, smoke, tx size — needs `B1` on `main` | Fri 23:00–02:00 |
+| A | `A4` SDK program strategy, `findPayment`, smoke, tx size — needs `B1` on `main`; **read *Noticed* first** | Fri 23:00–02:00 |
 | B | Vercel project, Neon database; then `B1` SDK core and the transfers strategy | now → Fri 15:00–18:00 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
@@ -37,3 +37,19 @@
 ## Noticed (outside any card)
 
 - `anchor` needs `~/.local/share/solana/install/active_release/bin` on `PATH`.
+- **`A4` — open question. Agent: ask Alexandre before starting this card.** `buildSplitPayment`
+  lives in `packages/sdk/src/strategies/transfers.ts` (owned by B) and throws
+  `program strategy not implemented` for `'program'`, but that file is not on `A4`'s **Touch
+  only these files** list, so `A4` cannot connect `strategies/program.ts` as written. Proposal
+  from B: add the file to `A4`'s list, for this one change only — replace that `throw` with the
+  call to the program builder, and update the test
+  `skips a zero leg and throws for the program strategy until A4`. Amount validation already
+  runs before the strategy check (`INVALID_AMOUNT` outside 1..=u64::MAX), so `program.ts` does
+  not repeat it. Delete this note once `A4` settles it.
+- **`pnpm verify` on Windows skips the build and the lint and still exits 0.** The single quotes
+  in `--filter './packages/*'` and `--filter './apps/*'` (root `package.json`) match no project
+  there ("No projects matched"). Until fixed, run
+  `pnpm --filter "./packages/*" --if-present run build` by hand on Windows.
+- **`packages/sdk/__tests__/unit.test.ts` is at 395 lines of the 400 limit.** `B2` and `A4` both
+  append to it, and splitting it is on no card. The tracks have to agree who splits it, and how,
+  before `B2`.
