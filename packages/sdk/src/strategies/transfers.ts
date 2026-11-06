@@ -21,6 +21,8 @@ const U64_MAX = 18_446_744_073_709_551_615n;
  * Builds an unsigned legacy split payment. Fee payer = payer; blockhash at `confirmed`.
  * `'transfers'` is implemented here; `'program'` is filled by A4.
  * An amount outside 1..=u64::MAX throws `INVALID_AMOUNT` for either strategy.
+ * A payer who is also a leg's wallet throws `INVALID_ACCOUNT` for either strategy: its balance
+ * would not rise by that leg's amount, so the verifier could never mark the payment paid.
  */
 export async function buildSplitPayment(
   connection: Connection,
@@ -32,6 +34,12 @@ export async function buildSplitPayment(
 ): Promise<Transaction> {
   if (amount <= 0n || amount > U64_MAX) {
     throw new BujiusCheckoutError(ErrorCode.INVALID_AMOUNT);
+  }
+  if (
+    payer.equals(config.authority) ||
+    config.recipients.some((r) => r.wallet.equals(payer))
+  ) {
+    throw new BujiusCheckoutError(ErrorCode.INVALID_ACCOUNT);
   }
   if (strategy === 'program') {
     throw new Error('program strategy not implemented');
@@ -65,14 +73,16 @@ async function buildTransfersPayment(
     legs.push({ wallet: config.authority, amount: merchant });
   }
 
-  const destAtas = legs.map((leg) =>
-    getAssociatedTokenAddressSync(config.mint, leg.wallet),
-  );
+  // A wallet may be a PDA or a multisig vault: contracts §1 has no on-curve rule.
+  const ataOf = (wallet: PublicKey) =>
+    getAssociatedTokenAddressSync(config.mint, wallet, true);
+  const destAtas = legs.map((leg) => ataOf(leg.wallet));
+  const source = ataOf(payer);
 
   let infos;
   try {
     infos = await connection.getMultipleAccountsInfo(
-      [...destAtas, config.mint],
+      [...destAtas, config.mint, source],
       'confirmed',
     );
   } catch {
@@ -80,7 +90,8 @@ async function buildTransfersPayment(
   }
 
   const mintInfo = infos[destAtas.length];
-  if (!mintInfo) {
+  const sourceInfo = infos[destAtas.length + 1];
+  if (!mintInfo || !sourceInfo) {
     throw new BujiusCheckoutError(ErrorCode.INVALID_ACCOUNT);
   }
   let decimals: number;
@@ -106,7 +117,6 @@ async function buildTransfersPayment(
     }
   }
 
-  const source = getAssociatedTokenAddressSync(config.mint, payer);
   let firstTransfer = true;
   for (let i = 0; i < legs.length; i++) {
     const leg = legs[i]!;
