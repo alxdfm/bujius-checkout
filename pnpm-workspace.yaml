@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+  - apps/*
+
+# Install-time build scripts run arbitrary code: approve only what breaks without its build.
+allowBuilds:
+  # tsx, tsup and vitest bundle through esbuild; its postinstall wires the platform binary.
+  esbuild: true
+  # Optional native accelerators from @solana/web3.js's tree; pure-JS fallbacks exist.
+  bufferutil: false
+  utf-8-validate: false
