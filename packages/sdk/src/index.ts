@@ -12,3 +12,5 @@ export { computeSplit } from './core/split-math';
 export { buildSplitPayment } from './strategies/transfers';
 export type { PaymentStrategy } from './strategies/transfers';
 export { findPayment } from './verify/find-payment';
+export { verifySplitPayment } from './verify/verify-payment';
+export type { Verification, VerifiedLeg } from './verify/verify-payment';

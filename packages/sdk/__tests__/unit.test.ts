@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { BorshAccountsCoder, BorshInstructionCoder, type Idl } from '@coral-xyz/anchor';
 import {
@@ -23,6 +24,7 @@ import {
   paymentUrl,
   PROGRAM_ID,
   toBaseUnits,
+  verifySplitPayment,
 } from '../src';
 import type { SplitConfig } from '../src';
 import idl from '../src/program/idl.json';
@@ -434,5 +436,83 @@ describe('strategies: buildSplitPayment transfers', () => {
     await expect(
       findPayment({ getSignaturesForAddress: async () => { throw new Error('x'); } } as unknown as Connection, key()),
     ).rejects.toMatchObject({ code: 'RPC_UNAVAILABLE' });
+  });
+});
+
+describe('verifySplitPayment', () => {
+  const key = () => Keypair.generate().publicKey;
+  const load = (name: string) =>
+    JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), 'utf8')) as {
+      signature: string;
+      reference: string;
+      response: { blockTime: number };
+    };
+  const config: SplitConfig = {
+    address: key(),
+    authority: new PublicKey('HFkjqnNS3wLCDdiHvPzD7fSpjr7vzqYL5d8Lz1zuesAo'),
+    id: 1,
+    mint: new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'),
+    recipients: [
+      { wallet: new PublicKey('5qEhKhJdXLwM8GpCSt7fhs7UadJdWCnA6S9Yy29NMguJ'), bps: 1000 },
+      { wallet: new PublicKey('FxnMGdk4UfRYMa9c19yKfdmNtEe1uy8N1kDSxzKu9xiJ'), bps: 250 },
+    ],
+  };
+  const verify = (
+    fixture: ReturnType<typeof load>,
+    amount: bigint,
+    opts: { reference?: PublicKey; expiresAt?: Date; config?: SplitConfig } = {},
+  ) =>
+    verifySplitPayment(
+      { getParsedTransaction: async () => fixture.response } as unknown as Connection,
+      fixture.signature,
+      opts.config ?? config,
+      amount,
+      opts.reference ?? new PublicKey(fixture.reference),
+      opts.expiresAt,
+    );
+
+  it('marks a program payment and a transfers payment paid for the same amount', async () => {
+    for (const name of ['program-payment', 'transfers-payment']) {
+      const result = await verify(load(name), 100_000n);
+      expect(result.status).toBe('paid');
+      expect(result.legs.map((leg) => leg.amount)).toEqual([10_000n, 2_500n, 87_500n]);
+    }
+  });
+
+  it('rejects a payment whose amount differs from the expected one', async () => {
+    const fixture = load('wrong-amount'); // paid 0.07, order was 0.10
+    const result = await verify(fixture, 100_000n);
+    expect(result.status).toBe('invalid');
+    expect(result.reason).toMatch(/expected/);
+    expect((await verify(fixture, 70_000n)).status).toBe('paid');
+  });
+
+  it('is paid_late when the block time is after expiresAt', async () => {
+    const fixture = load('program-payment');
+    const blockMs = fixture.response.blockTime * 1000;
+    expect((await verify(fixture, 100_000n, { expiresAt: new Date(blockMs - 1000) })).status).toBe('paid_late');
+    expect((await verify(fixture, 100_000n, { expiresAt: new Date(blockMs + 1000) })).status).toBe('paid');
+  });
+
+  it('rejects another mint and a missing reference', async () => {
+    const fixture = load('program-payment');
+    const otherMint = { ...config, mint: key() };
+    expect((await verify(fixture, 100_000n, { config: otherMint })).status).toBe('invalid');
+    const result = await verify(fixture, 100_000n, { reference: key() });
+    expect(result).toMatchObject({ status: 'invalid', reason: 'reference not in the transaction' });
+  });
+
+  it('rejects a failed or missing transaction and maps RPC errors', async () => {
+    const fixture = load('program-payment');
+    const failed = { ...fixture, response: { ...fixture.response, meta: { err: { InstructionError: [0, 'x'] } } } };
+    expect((await verify(failed as never, 100_000n)).reason).toBe('transaction failed');
+    const missing = { getParsedTransaction: async () => null } as unknown as Connection;
+    expect(
+      (await verifySplitPayment(missing, 'sig', config, 1n, key())).reason,
+    ).toBe('transaction not found');
+    const down = { getParsedTransaction: async () => { throw new Error('x'); } } as unknown as Connection;
+    await expect(verifySplitPayment(down, 'sig', config, 1n, key())).rejects.toMatchObject({
+      code: 'RPC_UNAVAILABLE',
+    });
   });
 });
