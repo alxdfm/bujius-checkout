@@ -14,7 +14,8 @@
     "build": "pnpm --filter './packages/*' --if-present run build",
     "test:program": "anchor test",
     "smoke": "tsx scripts/smoke-pay.ts",
-    "create-test-split": "tsx scripts/create-test-split.ts"
+    "create-test-split": "tsx scripts/create-test-split.ts",
+    "measure-pay-tx": "tsx scripts/measure-pay-tx.ts"
   },
   "devDependencies": {
     "@coral-xyz/anchor": "0.31.1",
