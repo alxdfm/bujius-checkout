@@ -7,6 +7,8 @@
 
 ## Where we are
 
+- **`B2` is done** and on `main`: `createTransactionRequestHandler`, with `resolve(key, account)`.
+  Not yet called by a real wallet: that is `B3`.
 - **`B1` is done** and on `main`: `toBaseUnits`, `fromBaseUnits`, `newReference`, `paymentUrl`,
   `computeSplit`, `buildSplitPayment` with `strategy: 'transfers'`.
 - **`A5` is done:** `verifySplitPayment(connection, signature, config, amount, reference, expiresAt?)`
@@ -30,7 +32,7 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
-| B | `B2` the transaction request handler; **read *Noticed* first** | Fri 18:00–19:30 |
+| B | `B3` demo store v1, the QR, the first phone payment; **read *Noticed* first** | Fri 19:30–21:30 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
@@ -49,14 +51,20 @@
   `program/create-split.ts` uses the default `allowOwnerOffCurve = false`. Owner: A.
 - **A demo payer must be its own wallet.** `buildSplitPayment` refuses a payer who is the merchant
   or a recipient. On camera and in `B3`, pay from a wallet with USDC that is in neither role.
-- **For `B2`:** `CONFIG_NOT_FOUND` (invalid bps) and `INVALID_AMOUNT` (amount out of range) reach
-  the handler but are not in the contracts §4 table. Invalid bps reusing `CONFIG_NOT_FOUND` goes
-  against `errors.ts` ("existing codes never change meaning"): agree a code in the same change.
-  Other `B1` review items are in `2026-11-06.md`.
+- **Invalid bps still reuse `CONFIG_NOT_FOUND`,** against `errors.ts` ("existing codes never change
+  meaning"). The handler answers it, `INVALID_AMOUNT` and any other error with contracts §4's 500
+  row. Other `B1` review items are in `2026-11-06.md`.
 - **`pnpm verify` on Windows skips the build and the lint and still exits 0.** The single quotes
   in `--filter './packages/*'` and `--filter './apps/*'` (root `package.json`) match no project
   there ("No projects matched"). Until fixed, run
   `pnpm --filter "./packages/*" --if-present run build` by hand on Windows.
-- **`packages/sdk/__tests__/unit.test.ts` is at 398 lines of the 400 limit.** `B2` and `A4` both
-  append to it, and splitting it is on no card. The tracks have to agree who splits it, and how,
-  before `B2`.
+- **The SDK's ESM bundle does not load in Node.** `strategies/program.ts` has
+  `import { BN, … } from '@coral-xyz/anchor'`, and Node refuses it: "Named export 'BN' not found".
+  The CJS bundle loads, and `pnpm verify` does not catch it. Owner: A. `B3` may hit it.
+- **For `A9`:** `resolve` now gets `(key, account)`, so the hold can compare the payer, and it runs
+  before `buildSplitPayment`. A payer the builder then refuses (no token account, a leg's wallet,
+  off-curve) has already taken the hold, and the real payer would get `ORDER_HELD`. Check before
+  the hold, or release it on failure. Owner: A.
+- **`packages/sdk/__tests__/unit.test.ts` is at 518 lines, over the 400 limit.** Splitting it is on
+  no card; the tracks have to agree who does it. `B2`'s tests went to
+  `__tests__/handler.unit.test.ts` so as not to grow it.
