@@ -7,20 +7,20 @@
 
 ## Where we are
 
+- **`A1` is done** on branch `a/a1-create-split` (`SplitConfig`, `create_split`; `anchor test`
+  10 passing, `pnpm verify` green). `lib.rs` and the tests are no longer Anchor's template.
 - **`A0` is done.** The workspace is on `main` at https://github.com/alxdfm/bujius-checkout and
   CI (`pnpm verify`) is green. `pnpm verify` exits 0; `anchor build` passes on the template
   program.
 - Program id (from `anchor init`, in `Anchor.toml` and `declare_id!`):
   `LNv2EvYZFN1fBJeQPDGffRxVYPMCGpa99yCcWDSDdjN`. Its keypair is backed up outside the
-  repository. `programs/bujius-checkout/src/lib.rs` and `tests/bujius-checkout.ts` are still
-  Anchor's template — `A1` replaces them.
-- Track B has been told the workspace is on `main` and is in the GitHub organisation.
+  repository.- Track B has been told the workspace is on `main` and is in the GitHub organisation.
 
 ## Next
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A1` program: `SplitConfig`, `create_split` | Fri 15:00–18:00 |
+| A | `A2` program: `pay` | Fri 18:00–21:30 |
 | B | Vercel project, Neon database; then `B1` SDK core and the transfers strategy | now → Fri 15:00–18:00 |
 
 ## Open
@@ -31,4 +31,4 @@
 
 ## Noticed (outside any card)
 
-- Nothing yet.
+- `anchor` needs `~/.local/share/solana/install/active_release/bin` on `PATH`.
