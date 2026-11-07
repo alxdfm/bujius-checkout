@@ -217,9 +217,9 @@ receipt shows its exact amount ("0.0875 USDC"),** because rounded legs would not
 
 | Route | Auth | Does |
 |---|---|---|
-| `POST /v1/charges` | key | body `{ amount: "12.50", orderId, webhookUrl?, successUrl?, expiresInSeconds? (60–3600, default 900) }` — **strict: any other field (a wallet, recipients, a config, a mint) → 400**; who gets paid comes from the merchant's `split_config`. A second call with the same pending `orderId` returns the same charge. → `201 { id, reference, amount, mint, status, checkoutUrl, paymentUrl, expiresAt }` |
+| `POST /v1/charges` | key | body `{ amount: "12.50", orderId, webhookUrl?, successUrl?, expiresInSeconds? (60–3600, default 900) }` — **strict: any other field (a wallet, recipients, a config, a mint) → 400**; who gets paid comes from the merchant's `split_config`. `webhookUrl` and `successUrl` are `https:` only. A second call with the same pending `orderId` and amount returns the same charge (`200`); the same `orderId` on a charge that is not pending, or with another amount, is `409 ORDER_ID_IN_USE`. → `201 { id, reference, amount, mint, status, checkoutUrl, paymentUrl, expiresAt }` |
 | `GET /v1/charges/:id` | key, own merchant | the charge plus `webhook: { lastStatusCode, lastSentAt }` |
-| `GET /v1/charges/:id/status` | public | `{ status, signature, amount, expiresAt, successUrl }`; while `pending`, asks the chain first (reconcile on read) |
+| `GET /v1/charges/:id/status` | public | `{ status, signature, reference, amount, expiresAt, successUrl }`; an unknown charge is `404` with the error envelope; while `pending`, asks the chain first (reconcile on read) |
 | `GET·POST·OPTIONS /pay/:reference` | public | the SDK handler; `resolve` reads the charge, then **holds it for the first payer** — a conditional update setting `payer` only when empty or equal → `ORDER_HELD` for anyone else |
 | `POST /v1/charges/:id/webhook/resend` | key | sends the charge's event again; `409` while pending |
 | `POST /hooks/helius` | `Authorization` = `HELIUS_WEBHOOK_SECRET` | for each transaction, the pending charges whose `reference` is among its account keys → verify → flip → webhook; answers `200` at once |
@@ -227,10 +227,15 @@ receipt shows its exact amount ("0.0875 USDC"),** because rounded legs would not
 
 Errors: `{ "error": { "code", "message" } }`.
 
+**Formats, in every charge response and in the webhook:** `amount` is base units as a string
+(`"12500000"`), `expiresAt` is ISO 8601. Only the `POST /v1/charges` body takes a decimal
+(`"12.50"`). Another merchant's charge is a `404`, never a `403`.
+
 **The flip:** `UPDATE charges SET status, signature, paid_at WHERE id = … AND status =
 'pending' RETURNING id`. Only the caller that gets the row back sends the webhook — status
-poll, Helius and a second lambda can race; one wins. `expired` is written once `expires_at` +
-60 s has passed with no payment; until then it is computed.
+poll, Helius and a second lambda can race; one wins. `pending` lasts until `expires_at` + 90 s
+(so a payment signed near the end still lands as `paid_late`); then `expired` is computed and
+written.
 
 ### The webhook to the store
 
