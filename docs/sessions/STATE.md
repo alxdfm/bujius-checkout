@@ -7,6 +7,12 @@
 
 ## Where we are
 
+- **`A10`'s route is in and verified from a local server:** a payment made with no page open, then a
+  simulated Helius POST with the secret, turned the charge `paid` and left one `webhook_deliveries` row;
+  the reply took 0.02 s; no or a wrong `Authorization` is `401`. **Still open:** register the webhook in
+  Helius once the hosted app is deployed — type **`rawDevnet`** (the reference is a readonly account, which
+  an enhanced payload may omit), account address = the program id, URL `<deployment>/hooks/helius`,
+  `authHeader` = `HELIUS_WEBHOOK_SECRET`. The same value goes in the deployment's env.
 - **`A9`'s code is in, verified on devnet from a local server:** a real 0.10 USDC payment through
   `/pay/:reference` turned the charge `paid`; 8 simultaneous status polls left one `paid` row and
   one `webhook_deliveries` row; a second payer got `ORDER_HELD`; a paid charge answers `ORDER_PAID`.
@@ -57,7 +63,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A10` the Helius trigger; and `A9`'s deployed check (see above) | Sat 23:00–02:00 |
+| A | Register the Helius webhook and run `A9`/`A10`'s deployed checks (both need the hosted deployment) · then `A11` | Sun 08:00 |
 | B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
