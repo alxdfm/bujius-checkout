@@ -9,7 +9,7 @@
 
 - **`A7` is done:** the verifiable build's SHA-256 equals the bytecode already on devnet
   (`7311c015…b76b984`), so no upgrade was needed; hash in the README. `@bujius/checkout-sdk@0.1.0`
-  is public on npm.
+  is public on npm; `0.1.1` (ESM load fix for Node 22) too.
 - **`A6` is done — the gate passed (Sat 2026-11-07), tag `gate`.** Phone (Solflare, 0.20 USDC,
   `5gWMyGgY…AruUZ`) and desktop (Backpack, 0.25 USDC, `56MMtDUe…`) purchases on the deployed store
   through the program: each split exact on-chain, order page `Paid`. A headless run also checked
@@ -108,10 +108,6 @@
   in `--filter './packages/*'` and `--filter './apps/*'` (root `package.json`) match no project
   there ("No projects matched"). Until fixed, run
   `pnpm --filter "./packages/*" --if-present run build` by hand on Windows.
-- **The published `@bujius/checkout-sdk@0.1.0` ESM bundle does not load in Node 22** ("Named export
-  'BN' not found"); `0.1.1` fixes it and is not published yet — run
-  `cd packages/sdk && npm publish --access public` (passkey, in a normal terminal). The CJS bundle
-  and bundlers (Next, tsx) were never affected. Node 20 is outside `engines` (`>=22`). Owner: A.
 - **`/c/[id]` copies from the demo store:** `format-usdc`, `send-lock`, `use-send-lock`, and in
   `checkout-panel.tsx` `useCountdown`, `clock` and nearly all of the panel's JSX, because neither
   app may import from the other and `apps/hosted/lib/` is A's. A shared home would be
