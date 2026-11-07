@@ -32,7 +32,7 @@
   `orderId` returns the same charge. Contracts §6 now has the agreed status shape, formats and 90 s.
 - **`A7` is done:** the verifiable build's SHA-256 equals the bytecode already on devnet
   (`7311c015…b76b984`), so no upgrade was needed; hash in the README. `@bujius/checkout-sdk@0.1.0`
-  is public on npm; use `0.1.2` (`0.1.1` is deprecated: it breaks bundlers).
+  is public on npm; use `0.1.3` (`0.1.1` is deprecated: it breaks bundlers).
 - **`A6` is done — the gate passed (Sat 2026-11-07), tag `gate`.** Phone (Solflare, 0.20 USDC,
   `5gWMyGgY…AruUZ`) and desktop (Backpack, 0.25 USDC, `56MMtDUe…`) purchases on the deployed store
   through the program: each split exact on-chain, order page `Paid`. A headless run also checked
@@ -76,7 +76,7 @@
   `@bujius/checkout-react@0.1.0` on npm (README inside). The Devpost draft is outside the repository
   (`~/.config/bujius-checkout/devpost-draft.md`); it leaves out the §12 lines that are not true of the
   build (any-endpoint, point of sale, "exactly once"). Left: the video link in the Devpost text after
-  `B10`. The SDK `0.1.3` carries its README: `cd packages/sdk && npm publish --access public` (passkey) is what is left.
+  `B10`. The SDK `0.1.3` is on npm with its README.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
