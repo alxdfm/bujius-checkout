@@ -16,8 +16,8 @@
   CORS, the transaction request, the status route and `ORDER_PAID` on a second pay. Still B's:
   the two backup takes.
 - **`B6`'s code is in:** `PAY_STRATEGY=program` on the deployed store, the status route on
-  `verifySplitPayment`, and `paid_late` and `invalid` with their own screens. Still to do: run the
-  gate with A (`A6`) and record the two takes.
+  `verifySplitPayment`, and `paid_late` and `invalid` with their own screens. Still to do: record
+  the two takes.
 - **`B3` and `B5` are done** on https://bujius-checkout.vercel.app: a phone payment of 0.10 USDC and
   a desktop payment of 0.20 USDC through the program, both verified, with the checkout moving to
   `Paid` by itself.
@@ -47,8 +47,28 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A8` hosted backend: schema, API keys, the charges API (needs `B7`'s scaffold of `apps/hosted`) | Sat 16:00–19:30 |
-| B | `B6`: run the gate with A, record the phone and desktop takes on the deployed store | Sat 09:00–14:00 |
+| B | `B7` in progress on `b/b7-hosted-page`: the scaffold, then `/c/[id]` against a mock. `A8` starts once `feat(hosted): scaffold the hosted checkout app` is on `main` | Sat 14:00–19:30 |
+| B | `B6`: record the phone and desktop takes on the deployed store | overdue, the gate has passed |
 
+- **For `A8`/`A9`, to agree with B (`B7`):** `/c/:id` needs a change to contracts §6 that is
+  proposed, not agreed, so `CONTRACTS.md` still has the old shape. `GET /v1/charges/:id/status`
+  has no `reference`, and the page needs it to build `/pay/:reference`; `amount` and `expiresAt`
+  have no format. Proposal: `{ status, signature, reference, amount, expiresAt, successUrl }`,
+  `amount` in base units as a string, `expiresAt` in ISO 8601, a `404` with contracts §6's error
+  envelope. The same `amount` and `expiresAt` formats in every charge response and in the webhook:
+  `POST /v1/charges` takes `"12.50"`, so two formats under one name would be off by 10^6. Also
+  proposed: the route keeps answering `pending` for a grace period past the expiry, because
+  `usePaymentStatus` stops at `expired` and a late payment would stay unseen (the demo store uses
+  90 s, `EXPIRY_GRACE_SECONDS`; A picks the value); and `A8`'s zod requires `https:` on
+  `successUrl`, because a `javascript:` URL would run on the hosted checkout's origin (the page
+  checks it too). `B7`'s mock will use this shape. Answer B before building the route; the
+  contract line lands with the code that needs it.
+- **For `A8`:** `apps/hosted/next.config.ts` rewrites `/v1/:path*` to `/api/v1/:path*`, because
+  contracts §6 serves `/v1/...` and `A8`'s handlers live in `app/api/v1/`. Nothing to do on A's side.
+- **For `A8`, to agree with B:** `B7`'s scaffold adds `tsconfig.typecheck.json`,
+  `postcss.config.mjs`, `.gitignore`, `.env.example`, `app/globals.css`, `app/page.tsx` and
+  `public/icon.svg`, which have no owner in `PLAN.md` §4. Proposal: `.env.example` is `[A+B]`,
+  append-only, and the others are B's.
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
   `~/.config/bujius-checkout/keys/` (outside the repository). Hand the address to B for
@@ -83,8 +103,8 @@
   `import { BN, … } from '@coral-xyz/anchor'`, and Node refuses it: "Named export 'BN' not found".
   The CJS bundle loads, and `pnpm verify` does not catch it. The demo store's Next build bundles
   it and is not affected; a direct Node import is. Owner: A.
-- **`apps/demo-store` has no `lint` script.** `eslint` is not in `PLAN.md` §5, so the lint step of
-  `pnpm verify` does nothing for it. The tracks have to decide whether to add it.
+- **`apps/demo-store` and `apps/hosted` have no `lint` script.** `eslint` is not in `PLAN.md` §5, so
+  the lint step of `pnpm verify` does nothing for them. The tracks have to decide whether to add it.
 - **For `A9`:** `resolve` now gets `(key, account)`, so the hold can compare the payer, and it runs
   before `buildSplitPayment`. A payer the builder then refuses (no token account, a leg's wallet,
   off-curve) has already taken the hold, and the real payer would get `ORDER_HELD`. Check before
