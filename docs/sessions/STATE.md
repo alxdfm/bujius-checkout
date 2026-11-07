@@ -7,13 +7,22 @@
 
 ## Where we are
 
+- **`B8` is done** (https://bujius-checkout.vercel.app): "Pay through the hosted checkout" on the cart,
+  `POST /api/hosted-charges`, the receiver, and `/orders/hosted?chargeId=…`, which reads
+  `GET /v1/charges/:id`. A hosted payment (`ch_295b497f…`) reached `paid` with a `200` delivery.
+- **`B7`'s code is in and deployed** (https://bujius-checkout-hosted.vercel.app): `/c/[id]` reads the
+  status route and the mock is gone. Passed on the deployment: the QR, a phone payment, the redirect to
+  `successUrl` with `chargeId`, "Charge not found" for an unknown id and `/c/ch_mock_paid`, and the
+  second payer's sentence through the page's button. Without `NEXT_PUBLIC_BASE_URL`, `/c/:id` shows
+  "This page could not load" and the name of the variable reaches only the log (checked on a local
+  production build, not on a Vercel preview). The two checks left are under **Next**.
 - **`A9` and `A10` are verified on the deployment** (https://bujius-checkout-hosted.vercel.app, Sat
   2026-11-07): a real 0.10 USDC payment through `/pay/:reference` turned the charge `paid` with one
   `webhook_deliveries` row; with the Helius webhook registered (`rawDevnet`, `ANY`, auth header =
   `HELIUS_WEBHOOK_SECRET`), a payment with no page open and no status poll turned `paid` within 10 s
   and left one row. The demo store's receiver accepted the signed webhook with `200` (a resend of `ch_66abd7e3…`, attempt 2,
-  after the first attempt got `500` while the store lacked `HOSTED_WEBHOOK_SECRET`). **Still open for
-  their Done when:** a phone payment through B's page `/c/[id]`. Known limit: `findPayment` returns the
+  after the first attempt got `500` while the store lacked `HOSTED_WEBHOOK_SECRET`). B reported a phone
+  payment through `/c/[id]` passing, which closes their Done when. Known limit: `findPayment` returns the
   first successful signature, so a wrong-amount transaction sent to a reference first keeps the charge
   `pending`.
 - **`A8` is done:** `POST` and `GET /v1/charges` on the Neon database (migration `0000` applied),
@@ -60,25 +69,16 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A11` (fixes, freeze, the submission's links) — after the two open checks above | Sun 08:00 |
-| B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
+| B | `B7`: the two checks below | now |
+| B | `B9`: READMEs, the architecture picture, Devpost draft, npm react. Start with the package's blockers under **Noticed** | Sat 23:00–02:00 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
-- The Neon database exists, created through Vercel. It still has to be connected to the
-  `apps/hosted` project, which does not exist yet, and `DATABASE_URL` goes to A outside the repository.
-- **To close `B7` once `A9` is on `main`:** make `app/c/[id]/page.tsx` read
-  `GET /v1/charges/:id/status`, point the panel's polling at it, delete `mock-charges.ts` and
-  `mock-status/`, and deploy the second Vercel project. Then test on the deployment:
-  1. A charge created with `curl` opens on `/c/:id` and shows the QR (`B7`'s **Done when**).
-  2. Pay it by phone from a wallet that is neither the merchant nor a recipient: the page turns
-     `Paid` by itself, with no reload, and the explorer link opens the transaction.
-  3. A charge with a `successUrl`: after `paid`, the page redirects there.
-  4. A second payer on a held charge sees "Someone else is already paying this order."
-  5. An unknown id shows "Charge not found"; `/c/ch_mock_paid` too, so the mock is gone.
-  6. A charge with `expiresInSeconds: 60`, unpaid: it shows "Charge expired" by itself about 90 s
-     after the expiry.
-  7. A preview deployment without `NEXT_PUBLIC_BASE_URL`: a pending charge shows "This page could
-     not load". Never run on a deployment: in dev Next answers its own 500, and the mock could not
-     reach this path in production.
+- **To close `B7`, on the deployment:**
+  1. A charge with no `successUrl`: paid with its page open, it turns `Paid` with no reload, and the
+     explorer link opens the transaction. `ch_127e7028…` was paid; nobody has confirmed the screen.
+  2. A charge with `expiresInSeconds: 60`, unpaid: an open tab shows "Charge expired" by itself. The
+     status route turned `expired` 95 s after the expiry (polled every 5 s) and a fresh load of the page
+     shows it; the open tab is not confirmed.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
@@ -103,15 +103,20 @@
 
 ## Noticed (outside any card)
 
-- **`/c/[id]` for an unknown id shows "This page could not load" on the deployment, not "Charge not
-  found"** (checked Sat 2026-11-07 on `ch_does_not_exist` and `ch_mock_paid`). Locally with the same code
-  it shows "Charge not found", and `curl` to the status route answers the right `404`
-  `CHARGE_NOT_FOUND`. So the server-side read of the page gets something else on Vercel. Owner: B
-  (`B7`'s test 5). No Vercel logs were available to A.
-
-- **The Vercel project deploys a private copy, not this repository:** `Cristierre/bujius-checkout`.
-  A push to `main` does not reach the store until it is also pushed there. Connect the project to
-  `alxdfm/bujius-checkout` before the gate. Owner: B, with A for the GitHub app.
+- **A held charge shows no sentence of ours through the QR.** The handler answers `409` with
+  "Someone else is already paying this order.", but a phone wallet showed its own "Dados inválidos do
+  provedor de pagamento". The page's button shows the sentence. B's call: nothing to do on our side
+  for now. Do not show this case on the phone in the video, or claim it in the pitch.
+- **The demo store's direct flow has no hold.** `ORDER_HELD` exists only in `apps/hosted`, so two
+  wallets on one `/checkout/...` link can both sign and pay the same order twice.
+- **Both Vercel projects deploy from `alxdfm/bujius-checkout`.** A commit outside a project's folder can
+  come back "Skipped - Not affected". To force one: Deployments → Create Deployment with `main`.
+  "Redeploy" reuses that deployment's commit.
+- **The local `pre-push` hook checks nothing where `rg` is not an executable.** The failure reads as
+  "no match", so the push goes through with `rg: command not found` on screen. Seen on B's machine;
+  the same check run with `git grep` found nothing.
+- **`/c/[id]` reads the charge through its own public route,** so a pending charge reconciles for the
+  page and again on the panel's first poll. A shared server read would live in `lib/`, which is A's.
 - **A payer with no USDC account hears "We could not read your account."** `buildSplitPayment`
   answers `INVALID_ACCOUNT`, so a wallet with SOL only gets a sentence that does not say why, against
   the "never vague" rule. Changing it is a contracts §4 change, to agree with A.
