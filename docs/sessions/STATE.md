@@ -70,22 +70,17 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A11` (fixes, freeze, the submission's links) — after the two open checks above | Sun 08:00 |
-| A | `B9`, handed over by B: READMEs, the architecture picture, Devpost draft, npm react. See the notes below | Sat 23:00–02:00 |
+| A | `B9`, handed over by B: written on `a/b9-docs`; the react publish is what is left (see below) | Sat 23:00–02:00 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
-- **`B9`, as handed over; nothing is started.** The card's files are A's for this card; `B10` stays B's.
-  1. **Decide first how to publish `@bujius/checkout-react`.** Both `require` and `import` in plain Node
-     fail on `wallet-provider.tsx`'s CSS import; Next handles it (both apps). B's suggestion: publish as
-     it is and have the README ask for a bundler that handles CSS, naming Next, the one tested. Moving
-     the import to the consumer touches `wallet-provider.tsx`, contracts §5 and both apps, outside the
-     card, and means testing the approved flow again.
-  2. **In `packages/react/package.json`:** the version is `0.0.0`, the description still speaks only
-     of the QR, and there is no `repository`. Not on npm yet; this was not published from B's machine,
-     which has no npm login.
-  3. **README claims:** not "any Solana Pay endpoint": see `@bujius/checkout-react` under **Noticed**.
-     Not the second payer's sentence through the QR either.
-  4. **Still missing:** `packages/{sdk,react}/README.md` and `docs/architecture.svg`; the root README
-     has 34 lines.
+- **`B9` is written on branch `a/b9-docs`; it merges once `@bujius/checkout-react@0.1.0` is on npm** (the
+  README links to it). Done: the root README, both package READMEs, `docs/architecture.svg`, the react
+  `package.json` (`0.1.0`, repository metadata). The Devpost draft is outside the repository
+  (`~/.config/bujius-checkout/devpost-draft.md`); it leaves out the §12 lines that are not true of the
+  build (any-endpoint, point of sale, "exactly once"). Left: `cd packages/react && npm publish --access
+  public` (passkey, normal terminal), then `npm view @bujius/checkout-react`, the merge, and the video
+  link in the Devpost text after `B10`. The published SDK `0.1.2` has no README on its npm page (the
+  README was written after); the next SDK version carries it.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
