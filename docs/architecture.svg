@@ -76,9 +76,9 @@
   <path class="arrow" d="M135 180 V218 H680"/>
   <text class="step" x="146" y="212">③ the wallet signs and sends it to the chain</text>
   <line class="arrow" x1="490" y1="180" x2="490" y2="250"/>
-  <text class="step" x="500" y="244">⑤ is it paid?</text>
+  <text class="step" x="500" y="244">④ is it paid?</text>
   <line class="arrow" x1="610" y1="310" x2="680" y2="310"/>
-  <text class="step" x="618" y="302">④ reads</text>
+  <text class="step" x="618" y="302">⑤ reads</text>
 
   <!-- Hosted service -->
   <rect class="hosted" x="30" y="412" width="900" height="112" rx="12"/>
