@@ -9,21 +9,27 @@
     "build": "pnpm run packages && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@bujius/checkout-react": "workspace:*",
     "@bujius/checkout-sdk": "workspace:*",
     "@solana/web3.js": "~1.98.4",
+    "drizzle-orm": "~0.45.4",
     "next": "~15.5.0",
+    "postgres": "~3.4.9",
     "react": "~19.1.0",
-    "react-dom": "~19.1.0"
+    "react-dom": "~19.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "drizzle-kit": "~0.31.11",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
