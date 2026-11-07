@@ -30,7 +30,7 @@
   `orderId` returns the same charge. Contracts §6 now has the agreed status shape, formats and 90 s.
 - **`A7` is done:** the verifiable build's SHA-256 equals the bytecode already on devnet
   (`7311c015…b76b984`), so no upgrade was needed; hash in the README. `@bujius/checkout-sdk@0.1.0`
-  is public on npm; use `0.1.3` (`0.1.1` is deprecated: it breaks bundlers).
+  is public on npm; use `0.1.4` (`0.1.1` is deprecated: it breaks bundlers).
 - **`A6` is done — the gate passed (Sat 2026-11-07), tag `gate`.** Phone (Solflare, 0.20 USDC,
   `5gWMyGgY…AruUZ`) and desktop (Backpack, 0.25 USDC, `56MMtDUe…`) purchases on the deployed store
   through the program: each split exact on-chain, order page `Paid`. A headless run also checked
@@ -151,7 +151,7 @@
   devnet: 0.05 USDC first, then 0.10, the charge turned `paid` with the right signature). The demo store
   still uses `findPayment` in `resolve` and in `readOrderStatus`, so a tiny transaction sent first makes
   its order `invalid` and `resolve` answers `ORDER_PAID`. No money is lost and the demo is not affected.
-  Owner: B for the store; the SDK is `0.1.4` once published.
+  Owner: B for the store. The hosted fix is deployed and checked in production (0.05 USDC first, then 0.10: `paid` with the right signature); SDK `0.1.4` is on npm.
 - **`verifySplitPayment` says `invalid` with "transaction not found" when the RPC lists a signature
   it does not serve yet.** That is not a verdict: `readOrderStatus` keeps it `pending`, matching
   that exact text. If the reason changes in the SDK, change it there too. Owner: A.
