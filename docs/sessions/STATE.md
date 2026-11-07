@@ -7,6 +7,10 @@
 
 ## Where we are
 
+- **`B5`'s code is ready, the card is not done:** cart, checkout, order page and every state, with the
+  status route already on `verifySplitPayment` (the card's `findPayment`-only step is obsolete: `A5`
+  landed). Run in Edge with no wallet, and against a real devnet payment for the receipt. Still to
+  do: pay on the deployed store from a phone and from a desktop wallet.
 - **`B4` is done:** `BujiusCheckoutWalletProvider`, `PayButton`, `usePaymentStatus`, `openCheckout`.
   Contracts §5 now has `onError(code, sentence)`, `className?` and the button's lock after a send.
   Not yet run in a real browser or with a real wallet: that is `B5`.
@@ -39,7 +43,7 @@
 |---|---|---|
 | A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
 | B | `B3`: Vercel deploy from `main` (root `apps/demo-store`) and the first phone payment; **read *Noticed* first** | Fri 19:30–21:30 |
-| B | `B5`: cart, checkout, order page and every state | Fri 23:00–02:00 |
+| B | `B5`: phone and desktop payments on the deployed store | Fri 23:00–02:00 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
@@ -75,9 +79,23 @@
   before `buildSplitPayment`. A payer the builder then refuses (no token account, a leg's wallet,
   off-curve) has already taken the hold, and the real payer would get `ORDER_HELD`. Check before
   the hold, or release it on failure. Owner: A.
-- **`usePaymentStatus` stops at `expired`, so it never reaches `paid_late`.** A payment landing just
-  after the expiry would stay unseen. No card or contract covers it. Plan for `B5`'s status route:
-  keep answering `pending` for a few seconds past the expiry before `expired`.
+- **The status route answers `pending` for 90 seconds past the expiry,** then `expired`, because
+  `usePaymentStatus` stops at `expired` and a late payment would stay unseen. No contract line says
+  so: `EXPIRY_GRACE_SECONDS` in `apps/demo-store/lib/order-status.ts`.
+- **One wrong transaction can block an order for good.** `findPayment` returns the earliest
+  successful signature carrying the reference, and the reference is public in the token. Anyone
+  sending a tiny transaction with it first makes the order `invalid`, and `resolve` then answers
+  `ORDER_PAID`. No money is lost, and it does not affect the demo. Owner: A.
+- **`verifySplitPayment` says `invalid` with "transaction not found" when the RPC lists a signature
+  it does not serve yet.** That is not a verdict: `readOrderStatus` keeps it `pending`, matching
+  that exact text. If the reason changes in the SDK, change it there too. Owner: A.
+- **`clearCart` ignores which order was paid.** Reopening an old order's checkout while the panel
+  sees it paid can erase a newer cart, and paying by phone with the desktop tab closed keeps the
+  paid items. It does not affect the demo. Owner: B.
+- **The send lock only covers the button.** A payer who scans the QR twice, or signs a wallet popup
+  left open after a reload, can still pay twice before the first one confirms.
+- **OneDrive can break `next build` on this machine** (`EINVAL ... readlink` on a file in `.next`).
+  Delete `apps/demo-store/.next` and build again.
 - **`@bujius/checkout-react` is not ready for `B9` yet.** `wallet-provider.tsx` imports the modal's
   CSS, which Next handles and a plain Node `require` does not. `PayButton` deserializes legacy
   transactions only, and `codeOf` tells `ORDER_PAID` from `ORDER_HELD` by the English sentence, so
