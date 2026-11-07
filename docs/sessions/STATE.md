@@ -23,9 +23,7 @@
   `HELIUS_WEBHOOK_SECRET`), a payment with no page open and no status poll turned `paid` within 10 s
   and left one row. The demo store's receiver accepted the signed webhook with `200` (a resend of `ch_66abd7e3…`, attempt 2,
   after the first attempt got `500` while the store lacked `HOSTED_WEBHOOK_SECRET`). B reported a phone
-  payment through `/c/[id]` passing, which closes their Done when. Known limit: `findPayment` returns the
-  first successful signature, so a wrong-amount transaction sent to a reference first keeps the charge
-  `pending`.
+  payment through `/c/[id]` passing, which closes their Done when.
 - **`A8` is done:** `POST` and `GET /v1/charges` on the Neon database (migration `0000` applied),
   strict zod bodies, API keys stored as SHA-256, `scripts/create-merchant.ts` prints the key and
   webhook secret once. `curl` creates a charge and returns `checkoutUrl` and `paymentUrl`; the same
@@ -147,10 +145,13 @@
 - **The status route answers `pending` for 90 seconds past the expiry,** then `expired`, because
   `usePaymentStatus` stops at `expired` and a late payment would stay unseen. No contract line says
   so: `EXPIRY_GRACE_SECONDS` in `apps/demo-store/lib/order-status.ts`.
-- **One wrong transaction can block an order for good.** `findPayment` returns the earliest
-  successful signature carrying the reference, and the reference is public in the token. Anyone
-  sending a tiny transaction with it first makes the order `invalid`, and `resolve` then answers
-  `ORDER_PAID`. No money is lost, and it does not affect the demo. Owner: A.
+- **One wrong transaction can still block an order in the demo store, no longer in the hosted app.**
+  The SDK has `findPayments` (every successful signature, earliest first) and the hosted `reconcileCharge`
+  verifies up to 5 of them, so a wrong amount sent first does not hide the right payment (checked on
+  devnet: 0.05 USDC first, then 0.10, the charge turned `paid` with the right signature). The demo store
+  still uses `findPayment` in `resolve` and in `readOrderStatus`, so a tiny transaction sent first makes
+  its order `invalid` and `resolve` answers `ORDER_PAID`. No money is lost and the demo is not affected.
+  Owner: B for the store; the SDK is `0.1.4` once published.
 - **`verifySplitPayment` says `invalid` with "transaction not found" when the RPC lists a signature
   it does not serve yet.** That is not a verdict: `readOrderStatus` keeps it `pending`, matching
   that exact text. If the reason changes in the SDK, change it there too. Owner: A.
