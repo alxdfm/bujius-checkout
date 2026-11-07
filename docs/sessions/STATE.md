@@ -13,10 +13,7 @@
   `orderId` returns the same charge. Contracts §6 now has the agreed status shape, formats and 90 s.
 - **`A7` is done:** the verifiable build's SHA-256 equals the bytecode already on devnet
   (`7311c015…b76b984`), so no upgrade was needed; hash in the README. `@bujius/checkout-sdk@0.1.0`
-  is public on npm. **`0.1.1` breaks bundlers** (webpack: "export 'default' … was not found in
-  '@coral-xyz/anchor'"); `0.1.2` fixes Node ESM and bundlers both and is **not published yet** —
-  `cd packages/sdk && npm publish --access public` (passkey, normal terminal), then
-  `npm deprecate @bujius/checkout-sdk@0.1.1 "breaks bundlers, use 0.1.2"`.
+  is public on npm; use `0.1.2` (`0.1.1` is deprecated: it breaks bundlers).
 - **`A6` is done — the gate passed (Sat 2026-11-07), tag `gate`.** Phone (Solflare, 0.20 USDC,
   `5gWMyGgY…AruUZ`) and desktop (Backpack, 0.25 USDC, `56MMtDUe…`) purchases on the deployed store
   through the program: each split exact on-chain, order page `Paid`. A headless run also checked
