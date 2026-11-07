@@ -70,17 +70,13 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A11` (fixes, freeze, the submission's links) — after the two open checks above | Sun 08:00 |
-| A | `B9`, handed over by B: written on `a/b9-docs`; the react publish is what is left (see below) | Sat 23:00–02:00 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
-- **`B9` is written on branch `a/b9-docs`; it merges once `@bujius/checkout-react@0.1.0` is on npm** (the
-  README links to it). Done: the root README, both package READMEs, `docs/architecture.svg`, the react
-  `package.json` (`0.1.0`, repository metadata). The Devpost draft is outside the repository
+- **`B9` is done and on `main`:** the root README, both package READMEs, `docs/architecture.svg`, and
+  `@bujius/checkout-react@0.1.0` on npm (README inside). The Devpost draft is outside the repository
   (`~/.config/bujius-checkout/devpost-draft.md`); it leaves out the §12 lines that are not true of the
-  build (any-endpoint, point of sale, "exactly once"). Left: `cd packages/react && npm publish --access
-  public` (passkey, normal terminal), then `npm view @bujius/checkout-react`, the merge, and the video
-  link in the Devpost text after `B10`. The published SDK `0.1.2` has no README on its npm page (the
-  README was written after); the next SDK version carries it.
+  build (any-endpoint, point of sale, "exactly once"). Left: the video link in the Devpost text after
+  `B10`. The published SDK `0.1.2` has no README on its npm page; the next SDK version carries it.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
