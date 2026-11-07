@@ -170,7 +170,7 @@
 ---
 
 ### B9 · READMEs, the architecture picture, Devpost draft, npm react
-**M** · partner · `b/b9-docs` · Sat 23:00–02:00
+**M** · Alexandre, handed over by the partner on Sat · `a/b9-docs` · Sat 23:00–02:00
 
 - **Depends:** `B8`.
 - **Why:** the judges read the README before they run anything.
