@@ -7,6 +7,10 @@
 
 ## Where we are
 
+- **`A8` is done:** `POST` and `GET /v1/charges` on the Neon database (migration `0000` applied),
+  strict zod bodies, API keys stored as SHA-256, `scripts/create-merchant.ts` prints the key and
+  webhook secret once. `curl` creates a charge and returns `checkoutUrl` and `paymentUrl`; the same
+  `orderId` returns the same charge. Contracts §6 now has the agreed status shape, formats and 90 s.
 - **`A7` is done:** the verifiable build's SHA-256 equals the bytecode already on devnet
   (`7311c015…b76b984`), so no upgrade was needed; hash in the README. `@bujius/checkout-sdk@0.1.0`
   is public on npm; `0.1.1` (ESM load fix for Node 22) too.
@@ -46,7 +50,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A8` hosted backend: schema, API keys, the charges API (needs `B7`'s scaffold of `apps/hosted`) | Sat 16:00–19:30 |
+| A | `A9` hosted: `/pay/:reference`, the status route and the flip, the webhook and resend | Sat 19:30–23:00 |
 | B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
