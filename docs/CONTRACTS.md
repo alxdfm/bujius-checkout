@@ -221,7 +221,7 @@ receipt shows its exact amount ("0.0875 USDC"),** because rounded legs would not
 | `GET /v1/charges/:id` | key, own merchant | the charge plus `webhook: { lastStatusCode, lastSentAt }` |
 | `GET /v1/charges/:id/status` | public | `{ status, signature, reference, amount, expiresAt, successUrl }`; an unknown charge is `404` with the error envelope; while `pending`, asks the chain first (reconcile on read) |
 | `GET·POST·OPTIONS /pay/:reference` | public | the SDK handler; `resolve` reads the charge, then **holds it for the first payer** — a conditional update setting `payer` only when empty or equal → `ORDER_HELD` for anyone else |
-| `POST /v1/charges/:id/webhook/resend` | key | sends the charge's event again; `409` while pending |
+| `POST /v1/charges/:id/webhook/resend` | key | sends the charge's event again → `200 { event, attempt, statusCode, error }`; `409 CHARGE_NOT_PAID` until paid, `409 NO_WEBHOOK_URL` without a `webhookUrl` |
 | `POST /hooks/helius` | `Authorization` = `HELIUS_WEBHOOK_SECRET` | for each transaction, the pending charges whose `reference` is among its account keys → verify → flip → webhook; answers `200` at once |
 | `GET /c/:id` | public | the hosted checkout page (`B7`) |
 
@@ -243,7 +243,9 @@ written.
 `{ id: "evt_…", type: "charge.paid" | "charge.paid_late", createdAt, data: { chargeId, orderId, reference, amount, mint, signature, paidAt } }`,
 header `BujiusCheckout-Signature: t=<unix>,v1=<hex HMAC-SHA256(webhook_secret, "<t>.<raw body>")>`.
 One attempt, 5 s timeout, a `webhook_deliveries` row either way; the receiver refuses a `t`
-more than 300 s away. Redelivery is the resend route.
+more than 300 s away. Redelivery is the resend route, with the same event `id`. The sender goes
+only to public HTTPS hosts (no localhost, private or link-local address, including a name that
+resolves to one) and never follows a redirect.
 
 ---
 
