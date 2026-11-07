@@ -8,7 +8,8 @@
     "dev": "pnpm run packages && next dev",
     "build": "pnpm run packages && next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "@bujius/checkout-react": "workspace:*",
@@ -24,6 +25,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "tailwindcss": "^4.1.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
   }
 }
