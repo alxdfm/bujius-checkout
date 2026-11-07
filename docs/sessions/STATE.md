@@ -47,9 +47,23 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A8` hosted backend: schema, API keys, the charges API (needs `B7`'s scaffold of `apps/hosted`) | Sat 16:00–19:30 |
-| B | `B7` in progress on `b/b7-hosted-page`: the scaffold, then `/c/[id]` against a mock. `A8` starts once `feat(hosted): scaffold the hosted checkout app` is on `main` | Sat 14:00–19:30 |
+| B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
 | B | `B6`: record the phone and desktop takes on the deployed store | overdue, the gate has passed |
 
+- **To close `B7` once `A9` is on `main`:** make `app/c/[id]/page.tsx` read
+  `GET /v1/charges/:id/status`, point the panel's polling at it, delete `mock-charges.ts` and
+  `mock-status/`, and deploy the second Vercel project. Then test on the deployment:
+  1. A charge created with `curl` opens on `/c/:id` and shows the QR (`B7`'s **Done when**).
+  2. Pay it by phone from a wallet that is neither the merchant nor a recipient: the page turns
+     `Paid` by itself, with no reload, and the explorer link opens the transaction.
+  3. A charge with a `successUrl`: after `paid`, the page redirects there.
+  4. A second payer on a held charge sees "Someone else is already paying this order."
+  5. An unknown id shows "Charge not found"; `/c/ch_mock_paid` too, so the mock is gone.
+  6. A charge with `expiresInSeconds: 60`, unpaid: it shows "Charge expired" by itself about 90 s
+     after the expiry.
+  7. A preview deployment without `NEXT_PUBLIC_BASE_URL`: a pending charge shows "This page could
+     not load". Never run on a deployment: in dev Next answers its own 500, and the mock could not
+     reach this path in production.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
