@@ -12,7 +12,7 @@ primitive for Bujius Pay, during the MLH Solana Hackathon (November 2026). Devne
 |---|---|
 | Program (devnet) | `LNv2EvYZFN1fBJeQPDGffRxVYPMCGpa99yCcWDSDdjN` |
 | Verifiable build (SHA-256) | `7311c0155b90e5bb857bc1c2477ec46444ec6a6a555b9935f1dd7336ee76b984` — `anchor build --verifiable`; equals the bytecode deployed on devnet |
-| `@bujius/checkout-sdk` | not published yet |
+| `@bujius/checkout-sdk` | [`0.1.0` on npm](https://www.npmjs.com/package/@bujius/checkout-sdk) |
 | `@bujius/checkout-react` | not published yet |
 
 ## Develop

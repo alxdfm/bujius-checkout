@@ -7,6 +7,9 @@
 
 ## Where we are
 
+- **`A7` is done:** the verifiable build's SHA-256 equals the bytecode already on devnet
+  (`7311c015…b76b984`), so no upgrade was needed; hash in the README. `@bujius/checkout-sdk@0.1.0`
+  is public on npm.
 - **`A6` is done — the gate passed (Sat 2026-11-07), tag `gate`.** Phone (Solflare, 0.20 USDC,
   `5gWMyGgY…AruUZ`) and desktop (Backpack, 0.25 USDC, `56MMtDUe…`) purchases on the deployed store
   through the program: each split exact on-chain, order page `Paid`. A headless run also checked
@@ -43,7 +46,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A7` verifiable build, licence check, npm `0.1.0` | Sat 14:00–16:00 |
+| A | `A8` hosted backend: schema, API keys, the charges API (needs `B7`'s scaffold of `apps/hosted`) | Sat 16:00–19:30 |
 | B | `B6`: run the gate with A, record the phone and desktop takes on the deployed store | Sat 09:00–14:00 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
