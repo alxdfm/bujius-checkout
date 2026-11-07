@@ -16,6 +16,9 @@ function required(name: string): string {
   return value;
 }
 
+/** The public RPC the browser sends through. Apart from `readStoreEnv`: the pay route never needs it. */
+export const readBrowserRpcUrl = () => required('NEXT_PUBLIC_RPC_URL');
+
 /**
  * Server only: this carries `RPC_URL` and `ORDER_SECRET`. Read on each use, not at import,
  * so `next build` needs no secret.

@@ -12,6 +12,9 @@ import {
   type OrderPayload,
 } from '../lib/order-token';
 import { createOrderResolver } from '../lib/resolve-order';
+import { addToCart, MAX_QTY, parseCart, setQty } from '../lib/cart';
+import { EXPIRY_GRACE_SECONDS, readOrderStatus } from '../lib/order-status';
+import { isSendInFlight, parseSentAt, SEND_WINDOW_MS } from '../lib/send-lock';
 
 const SECRET = 'a-test-secret';
 const order = (over: Partial<OrderPayload> = {}): OrderPayload => ({
@@ -192,5 +195,172 @@ describe('the handler resolve', () => {
     const result = await resolve(createOrderToken(order({ e: 2_000 }), SECRET));
 
     expect(result).toMatchObject({ amount: 12_500_000n });
+  });
+});
+
+describe('formatUsdc on a leg', () => {
+  it.each([
+    [87_500n, '0.0875'],
+    [10_000n, '0.01'],
+    [2_500n, '0.0025'],
+    [12_500_000n, '12.50'],
+    [1n, '0.000001'],
+    [0n, '0.00'],
+  ])('%s -> %s', (amount, text) => {
+    expect(formatUsdc(amount)).toBe(text);
+  });
+});
+
+describe('cart', () => {
+  it('adds, counts up and stops at the limit priceOrder accepts', () => {
+    let cart = addToCart([], 'a');
+    cart = addToCart(cart, 'a');
+    expect(cart).toEqual([{ sku: 'a', qty: 2 }]);
+    expect(setQty(cart, 'a', MAX_QTY + 5)).toEqual([{ sku: 'a', qty: MAX_QTY }]);
+    expect(priceOrder(setQty(addToCart([], 'sticker-pack'), 'sticker-pack', 99))).toBe(1_000_000n);
+  });
+
+  it('removes a line below 1 and leaves the others', () => {
+    const cart = addToCart(addToCart([], 'a'), 'b');
+    expect(setQty(cart, 'a', 0)).toEqual([{ sku: 'b', qty: 1 }]);
+  });
+
+  it.each([
+    ['nothing saved', null],
+    ['broken JSON', '{'],
+    ['not a list', '{"sku":"a"}'],
+    ['a null line', '[null]'],
+    ['a zero quantity', '[{"sku":"a","qty":0}]'],
+    ['too many', '[{"sku":"a","qty":11}]'],
+    ['a fractional quantity', '[{"sku":"a","qty":1.5}]'],
+    ['a quantity as a string', '[{"sku":"a","qty":"1"}]'],
+  ])('reads %s as an empty cart', (_, raw) => {
+    expect(parseCart(raw)).toEqual([]);
+  });
+
+  it('keeps the first of a repeated line, so a sku is never counted twice', () => {
+    expect(parseCart('[{"sku":"a","qty":1},{"sku":"a","qty":9}]')).toEqual([{ sku: 'a', qty: 1 }]);
+  });
+});
+
+describe('readOrderStatus', () => {
+  const merchant = Keypair.generate().publicKey;
+  const partner = Keypair.generate().publicKey;
+  const platform = Keypair.generate().publicKey;
+  const mint = Keypair.generate().publicKey;
+  const config: SplitConfig = {
+    address: Keypair.generate().publicKey,
+    authority: merchant,
+    id: 1n,
+    mint,
+    recipients: [
+      { wallet: partner, bps: 1000 },
+      { wallet: platform, bps: 250 },
+    ],
+  } as unknown as SplitConfig;
+  const EXPIRES = 1_900_000_000;
+  const paying = () => order({ a: '100000', e: EXPIRES });
+
+  const balance = (owner: PublicKey, amount: bigint) => ({
+    mint: mint.toBase58(),
+    owner: owner.toBase58(),
+    uiTokenAmount: { amount: amount.toString() },
+  });
+
+  /** A parsed transaction whose legs rose by these amounts. */
+  const transaction = (reference: string, rose: [bigint, bigint, bigint], over: object = {}) => ({
+    blockTime: EXPIRES - 60,
+    transaction: { message: { accountKeys: [{ pubkey: reference }] } },
+    meta: {
+      err: null,
+      preTokenBalances: [],
+      postTokenBalances: [balance(merchant, rose[0]), balance(partner, rose[1]), balance(platform, rose[2])],
+    },
+    ...over,
+  });
+
+  function chainWith(signatures: object[] | Error, tx: unknown = null) {
+    const connection = {
+      getSignaturesForAddress: vi.fn(async () => {
+        if (signatures instanceof Error) throw signatures;
+        return signatures;
+      }),
+      getParsedTransaction: vi.fn(async () => tx),
+    };
+    return {
+      connection: connection as unknown as Connection,
+      loadConfig: vi.fn(async () => config),
+    };
+  }
+  const SIGNED = [{ signature: 'sig1', err: null }];
+  const EXACT: [bigint, bigint, bigint] = [87_500n, 10_000n, 2_500n];
+
+  it('stays pending with no payment before the expiry and through the grace', async () => {
+    const chain = chainWith([]);
+    for (const now of [EXPIRES - 1, EXPIRES, EXPIRES + EXPIRY_GRACE_SECONDS - 1]) {
+      expect(await readOrderStatus(chain, paying(), now)).toEqual({ status: 'pending' });
+    }
+  });
+
+  it('expires when the grace ends with no payment', async () => {
+    expect(await readOrderStatus(chainWith([]), paying(), EXPIRES + EXPIRY_GRACE_SECONDS)).toEqual({ status: 'expired' });
+  });
+
+  it('a signature alone is not paid: the amounts decide', async () => {
+    const o = paying();
+    const result = await readOrderStatus(chainWith(SIGNED, transaction(o.r, [1n, 10_000n, 2_500n])), o, EXPIRES - 60);
+    expect(result.status).toBe('invalid');
+  });
+
+  it('is paid with the exact legs, recipients first and the merchant last', async () => {
+    const o = paying();
+    const result = await readOrderStatus(chainWith(SIGNED, transaction(o.r, EXACT)), o, EXPIRES - 60);
+    expect(result).toMatchObject({ status: 'paid', signature: 'sig1' });
+    const legs = 'legs' in result ? result.legs : [];
+    expect(legs.map((l) => l.amount)).toEqual([10_000n, 2_500n, 87_500n]);
+    expect(legs[2]!.wallet.equals(merchant)).toBe(true);
+  });
+
+  it('is paid_late when the block is past the expiry, even after the grace', async () => {
+    const o = paying();
+    const tx = transaction(o.r, EXACT, { blockTime: EXPIRES + 30 });
+    const result = await readOrderStatus(chainWith(SIGNED, tx), o, EXPIRES + 10_000);
+    expect(result.status).toBe('paid_late');
+  });
+
+  it('a signature the RPC does not serve yet stays pending, never a final invalid', async () => {
+    const result = await readOrderStatus(chainWith(SIGNED, null), paying(), EXPIRES - 60);
+    expect(result).toEqual({ status: 'pending' });
+  });
+
+  it('a transaction without the reference is invalid', async () => {
+    const o = paying();
+    const chain = chainWith(SIGNED, transaction(Keypair.generate().publicKey.toBase58(), EXACT));
+    expect((await readOrderStatus(chain, o, EXPIRES - 60)).status).toBe('invalid');
+  });
+
+  it('lets an RPC failure through, for the route to say the network is busy', async () => {
+    await expect(readOrderStatus(chainWith(new Error('429')), paying(), EXPIRES)).rejects.toMatchObject({
+      code: 'RPC_UNAVAILABLE',
+    });
+  });
+});
+
+describe('send lock', () => {
+  it('holds for the whole window and opens when it ends', () => {
+    expect(isSendInFlight(1_000, 1_000)).toBe(true);
+    expect(isSendInFlight(1_000, 1_000 + SEND_WINDOW_MS - 1)).toBe(true);
+    expect(isSendInFlight(1_000, 1_000 + SEND_WINDOW_MS)).toBe(false);
+  });
+
+  it('holds nothing when no payment was sent', () => {
+    expect(isSendInFlight(null, 1_000)).toBe(false);
+  });
+
+  it('reads a saved time and refuses anything else', () => {
+    expect(parseSentAt('1900000000000')).toBe(1_900_000_000_000);
+    for (const raw of [null, '', 'abc', '-1', '0', '1.5', '1e400']) {
+      expect(parseSentAt(raw)).toBeNull();
+    }
   });
 });

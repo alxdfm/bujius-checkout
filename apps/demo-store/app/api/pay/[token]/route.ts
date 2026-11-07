@@ -1,10 +1,6 @@
-import {
-  createTransactionRequestHandler,
-  fetchSplitConfig,
-  type SplitConfig,
-} from '@bujius/checkout-sdk';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { createTransactionRequestHandler } from '@bujius/checkout-sdk';
 import { createOrderResolver } from '@/lib/resolve-order';
+import { getStoreChain } from '@/lib/store-chain';
 import { readStoreEnv } from '@/lib/store-env';
 
 export const dynamic = 'force-dynamic';
@@ -17,19 +13,8 @@ function getHandler(): Handler {
   if (handler) {
     return handler;
   }
-  const { rpcUrl, baseUrl, orderSecret, splitConfig, strategy } = readStoreEnv();
-  const connection = new Connection(rpcUrl, 'confirmed');
-  const address = new PublicKey(splitConfig);
-
-  // A split config is immutable: one successful read lasts the life of the lambda.
-  let config: Promise<SplitConfig> | undefined;
-  const loadConfig = () => {
-    config ??= fetchSplitConfig(connection, address).catch((error: unknown) => {
-      config = undefined;
-      throw error;
-    });
-    return config;
-  };
+  const { baseUrl, orderSecret, strategy } = readStoreEnv();
+  const { connection, loadConfig } = getStoreChain();
 
   handler = createTransactionRequestHandler({
     connection,

@@ -198,7 +198,8 @@ the QR's URL.
 | `openCheckout` | `checkoutUrl` | redirect — the hosted checkout's entry point |
 
 **Payer-facing copy** may say "USDC", the wallet's name and the token amount — the payer
-already holds crypto. Amounts show two decimals ("12.50 USDC").
+already holds crypto. Amounts show two decimals ("12.50 USDC"). **One exception: a leg on a
+receipt shows its exact amount ("0.0875 USDC"),** because rounded legs would not prove the split.
 
 ---
 

@@ -1,5 +1,5 @@
 import { CATALOG } from '@/lib/catalog';
-import { BuyButton } from './buy-button';
+import { AddToCart } from './add-to-cart';
 
 export default function CatalogPage() {
   return (
@@ -13,7 +13,7 @@ export default function CatalogPage() {
               <p className="font-medium">{product.name}</p>
               <p className="text-sm text-zinc-600">{product.description}</p>
             </div>
-            <BuyButton sku={product.sku} label={`Buy · ${product.price} USDC`} />
+            <AddToCart sku={product.sku} price={product.price} />
           </li>
         ))}
       </ul>

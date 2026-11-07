@@ -1,7 +1,9 @@
-import { fromBaseUnits, toBaseUnits } from '@bujius/checkout-sdk';
+import { toBaseUnits } from '@bujius/checkout-sdk';
+import { MAX_QTY } from './cart';
+
+export { formatUsdc } from './format-usdc';
 
 const USDC_DECIMALS = 6;
-const MAX_QTY = 10;
 const MAX_LINES = 20;
 
 export interface Product {
@@ -42,8 +44,6 @@ export function priceOrder(items: unknown): bigint | null {
   return total;
 }
 
-/** A base-unit amount for a screen or an API body, at least two decimals: "12.50". */
-export function formatUsdc(amount: bigint): string {
-  const [whole, fraction = ''] = fromBaseUnits(amount, USDC_DECIMALS).split('.');
-  return `${whole}.${fraction.padEnd(2, '0')}`;
-}
+/** Each product with its price in base units, as a string: what a client component may hold. */
+export const pricedCatalog = () =>
+  CATALOG.map(({ sku, name }) => ({ sku, name, units: PRICES.get(sku)!.toString() }));
