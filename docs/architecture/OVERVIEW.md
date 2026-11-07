@@ -39,8 +39,9 @@ checkout page polls status ──▶ findPayment(reference) → verifySplitPayme
 
 `PayButton` speaks the same plain Solana Pay transaction request: `POST { account }` to the
 handler, deserializes the transaction, asks the extension to sign and send. The browser never
-builds the transaction — so the button works against **any** transaction request endpoint,
-Bujius Pay's included.
+builds the transaction, so the button needs nothing from the store but this endpoint. It is
+tested against the SDK's handler, not against every Solana Pay endpoint: it deserializes legacy
+transactions only and tells `ORDER_PAID` from `ORDER_HELD` by that handler's English sentence.
 
 ## Two strategies behind one signature
 
