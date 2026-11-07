@@ -7,19 +7,14 @@
 
 ## Where we are
 
-- **`A10`'s route is in and verified from a local server:** a payment made with no page open, then a
-  simulated Helius POST with the secret, turned the charge `paid` and left one `webhook_deliveries` row;
-  the reply took 0.02 s; no or a wrong `Authorization` is `401`. **Still open:** register the webhook in
-  Helius once the hosted app is deployed — type **`rawDevnet`** (the reference is a readonly account, which
-  an enhanced payload may omit), account address = the program id, URL `<deployment>/hooks/helius`,
-  `authHeader` = `HELIUS_WEBHOOK_SECRET`. The same value goes in the deployment's env.
-- **`A9`'s code is in, verified on devnet from a local server:** a real 0.10 USDC payment through
-  `/pay/:reference` turned the charge `paid`; 8 simultaneous status polls left one `paid` row and
-  one `webhook_deliveries` row; a second payer got `ORDER_HELD`; a paid charge answers `ORDER_PAID`.
-  **Still open for `A9`'s Done when:** a phone payment through B's page on a deployed hosted app,
-  and a 2xx from the demo store's receiver (the deployed store answered `404` — it needs the
-  `B8` deploy with `HOSTED_WEBHOOK_SECRET`). Known limit: `findPayment` returns the first successful
-  signature, so a wrong-amount transaction sent to a reference first keeps the charge `pending`.
+- **`A9` and `A10` are verified on the deployment** (https://bujius-checkout-hosted.vercel.app, Sat
+  2026-11-07): a real 0.10 USDC payment through `/pay/:reference` turned the charge `paid` with one
+  `webhook_deliveries` row; with the Helius webhook registered (`rawDevnet`, `ANY`, auth header =
+  `HELIUS_WEBHOOK_SECRET`), a payment with no page open and no status poll turned `paid` within 10 s
+  and left one row. **Still open for their Done when:** a 2xx from the demo store's receiver (the
+  deployed store answers `404`: it needs `B8`'s deploy with `HOSTED_WEBHOOK_SECRET`), and a phone
+  payment through B's page. Known limit: `findPayment` returns the first successful signature, so a
+  wrong-amount transaction sent to a reference first keeps the charge `pending`.
 - **`A8` is done:** `POST` and `GET /v1/charges` on the Neon database (migration `0000` applied),
   strict zod bodies, API keys stored as SHA-256, `scripts/create-merchant.ts` prints the key and
   webhook secret once. `curl` creates a charge and returns `checkoutUrl` and `paymentUrl`; the same
@@ -63,7 +58,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | Register the Helius webhook and run `A9`/`A10`'s deployed checks (both need the hosted deployment) · then `A11` | Sun 08:00 |
+| A | `A11` (fixes, freeze, the submission's links) — after the two open checks above | Sun 08:00 |
 | B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
