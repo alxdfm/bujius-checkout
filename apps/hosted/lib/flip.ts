@@ -4,8 +4,8 @@ import { and, eq } from 'drizzle-orm';
 import {
   EXPIRY_GRACE_SECONDS,
   effectiveStatus,
-} from '@/app/api/v1/charges/serialize';
-import { getConnection, getSplitConfig, getSplitMint } from '@/app/api/v1/charges/split-config';
+} from '../app/api/v1/charges/serialize';
+import { getConnection, getSplitConfig, getSplitMint } from '../app/api/v1/charges/split-config';
 import { getDb } from './db/client';
 import { charges, type Charge, type Merchant } from './db/schema';
 import { deliverWebhook, eventTypeFor } from './webhook';
@@ -104,4 +104,49 @@ export async function sendFlipWebhook(flipped: Charge, merchant: Merchant): Prom
   } catch (error) {
     console.error(`Webhook for ${flipped.id} could not be recorded: ${error instanceof Error ? error.name : 'error'}`);
   }
+}
+
+export interface HeliusTransaction {
+  signature: string | null;
+  /** Every account the transaction mentions, readonly ones included. */
+  keys: string[];
+}
+
+function strings(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+}
+
+function accountsOf(instruction: unknown): string[] {
+  const accounts = (instruction as { accounts?: unknown } | null)?.accounts;
+  return strings(accounts);
+}
+
+/**
+ * Reads a Helius webhook body: a raw transaction (`transaction.message.accountKeys`) or an
+ * enhanced one (`accountData` and each instruction's `accounts`). The body only says WHICH charges to
+ * look at; `reconcileCharge` asks the chain, so nothing in here is trusted as a payment.
+ */
+export function readHeliusTransactions(payload: unknown): HeliusTransaction[] {
+  const items = Array.isArray(payload) ? payload : [payload];
+  const out: HeliusTransaction[] = [];
+  for (const item of items.slice(0, 200)) {
+    if (typeof item !== 'object' || item === null) continue;
+    const tx = item as Record<string, unknown>;
+    const raw = tx.transaction as { signatures?: unknown; message?: { accountKeys?: unknown } } | undefined;
+    const keys = new Set<string>(strings(raw?.message?.accountKeys));
+    for (const entry of Array.isArray(tx.accountData) ? tx.accountData : []) {
+      const account = (entry as { account?: unknown } | null)?.account;
+      if (typeof account === 'string') keys.add(account);
+    }
+    for (const ix of Array.isArray(tx.instructions) ? tx.instructions : []) {
+      for (const account of accountsOf(ix)) keys.add(account);
+      const inner = (ix as { innerInstructions?: unknown } | null)?.innerInstructions;
+      for (const innerIx of Array.isArray(inner) ? inner : []) {
+        for (const account of accountsOf(innerIx)) keys.add(account);
+      }
+    }
+    const signature = typeof tx.signature === 'string' ? tx.signature : (strings(raw?.signatures)[0] ?? null);
+    if (keys.size > 0) out.push({ signature, keys: [...keys].slice(0, 256) });
+  }
+  return out;
 }

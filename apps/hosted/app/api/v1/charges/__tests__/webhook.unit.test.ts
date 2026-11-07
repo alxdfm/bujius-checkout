@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { readHeliusTransactions } from '../../../../../lib/flip';
 import type { Charge } from '../../../../../lib/db/schema';
 import {
   assertPublicWebhookUrl,
@@ -104,5 +105,32 @@ describe('assertPublicWebhookUrl', () => {
     await expect(
       assertPublicWebhookUrl('https://evil.example/hook', resolvesTo('8.8.8.8', '10.0.0.5')),
     ).rejects.toThrow('internal host');
+  });
+});
+
+describe('readHeliusTransactions', () => {
+  it('reads a raw transaction: signature and account keys, readonly ones included', () => {
+    const [tx] = readHeliusTransactions([
+      { transaction: { signatures: ['sigA'], message: { accountKeys: ['payer', 'reference'] } } },
+    ]);
+    expect(tx).toEqual({ signature: 'sigA', keys: ['payer', 'reference'] });
+  });
+
+  it('reads an enhanced transaction: accountData and instruction accounts, inner ones too', () => {
+    const [tx] = readHeliusTransactions([
+      {
+        signature: 'sigB',
+        accountData: [{ account: 'a1' }],
+        instructions: [{ accounts: ['a2'], innerInstructions: [{ accounts: ['a3'] }] }],
+      },
+    ]);
+    expect(tx?.signature).toBe('sigB');
+    expect(tx?.keys.sort()).toEqual(['a1', 'a2', 'a3']);
+  });
+
+  it('accepts one object, and ignores anything that is not a transaction', () => {
+    expect(readHeliusTransactions({ signature: 's', accountData: [{ account: 'x' }] })).toHaveLength(1);
+    expect(readHeliusTransactions([null, 5, 'x', {}, { accountData: 'no' }])).toEqual([]);
+    expect(readHeliusTransactions(undefined)).toEqual([]);
   });
 });
