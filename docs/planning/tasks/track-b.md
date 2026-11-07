@@ -142,7 +142,8 @@
 - **Touch only these files:** `apps/hosted/{package.json,next.config.ts,tsconfig.json}`,
   `apps/hosted/{tsconfig.typecheck.json,postcss.config.mjs,.gitignore,.env.example}`,
   `apps/hosted/app/{layout,page}.tsx`, `apps/hosted/app/globals.css`,
-  `apps/hosted/public/icon.svg`, `apps/hosted/app/c/[id]/**`, `pnpm-lock.yaml`.
+  `apps/hosted/public/icon.svg`, `apps/hosted/app/c/[id]/**`,
+  `apps/hosted/__tests__/unit.test.ts`, `pnpm-lock.yaml`.
 - **Steps:** 1. Scaffold and push. 2. The page against the mock. 3. Swap the mock for the real
   route when `A9` lands. 4. Deploy the second Vercel project.
 - **Never:** edit `app/api/`, `app/pay/`, `app/hooks/` or `lib/` — they are A's.
