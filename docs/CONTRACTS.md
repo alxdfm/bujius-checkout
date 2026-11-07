@@ -193,7 +193,7 @@ the QR's URL.
 |---|---|---|
 | `BujiusCheckoutWalletProvider` | `endpoint`, `children` | connection + wallet-adapter provider (Wallet Standard discovery, no wallet list hard-coded) + its modal |
 | `PaymentQR` | `url`, `size = 256` | the QR of a `solana:` URL |
-| `PayButton` | `transactionRequestUrl`, `onSigned(signature)`, `onError(code)`, `label?` | not connected → opens the modal · connected → `POST { account }`, deserializes, asks the wallet to sign and send, reports the signature. Default label "Pay with {wallet name}" |
+| `PayButton` | `transactionRequestUrl`, `onSigned(signature)`, `onError(code, sentence)`, `label?`, `className?` | not connected → opens the modal · connected → `POST { account }`, deserializes, asks the wallet to sign and send, reports the signature, then stays locked for that URL. Default label "Pay with {wallet name}". `code`: `INVALID_ACCOUNT`, `ORDER_NOT_FOUND`, `ORDER_HELD`, `ORDER_PAID`, `ORDER_EXPIRED`, `RPC_UNAVAILABLE`, `REQUEST_FAILED`, `WALLET_FAILED`; `sentence` is the text to show the payer |
 | `usePaymentStatus` | `statusUrl`, `intervalMs = 2000` | polls until `paid`, `paid_late`, `expired` or `invalid` → `{ status, signature, error }` |
 | `openCheckout` | `checkoutUrl` | redirect — the hosted checkout's entry point |
 
