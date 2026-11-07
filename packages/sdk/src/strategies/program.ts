@@ -1,4 +1,5 @@
-import anchor, { BorshInstructionCoder, type Idl } from '@coral-xyz/anchor';
+import * as anchorModule from '@coral-xyz/anchor';
+import { BorshInstructionCoder, type Idl } from '@coral-xyz/anchor';
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
@@ -16,8 +17,11 @@ import type { SplitConfig } from '../program/config';
 import idl from '../program/idl.json';
 import { PROGRAM_ID } from '../program/pda';
 
-// Node's ESM loader cannot see `BN` as a named export of this CommonJS package.
-const { BN } = anchor;
+// `BN` is not a named export in Node's native ESM view of this CommonJS package (it hangs off
+// `default`), while bundlers expose it by name and have no `default`. `Reflect.get` keeps the
+// bundler from checking a static `default` access.
+const anchorExports = (Reflect.get(anchorModule, 'default') ?? anchorModule) as typeof anchorModule;
+const { BN } = anchorExports;
 const coder = new BorshInstructionCoder(idl as Idl);
 
 /**
