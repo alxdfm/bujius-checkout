@@ -3,9 +3,7 @@
   "compilerOptions": {
     "incremental": false,
     "paths": {
-      "@/*": ["./*"],
-      "@bujius/checkout-sdk": ["../../packages/sdk/src/index.ts"],
-      "@bujius/checkout-react": ["../../packages/react/src/index.tsx"]
+      "@/*": ["./*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

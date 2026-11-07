@@ -10,3 +10,7 @@ allowBuilds:
   bufferutil: false
   utf-8-validate: false
   bigint-buffer: false
+
+minimumReleaseAgeExclude:
+  - '@bujius/checkout-react@0.1.0'
+  - '@bujius/checkout-sdk@0.1.3 || 0.1.4'

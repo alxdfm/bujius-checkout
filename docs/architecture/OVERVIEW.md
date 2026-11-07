@@ -7,7 +7,7 @@
 
 | Layer | Pieces | When |
 |---|---|---|
-| **Open** — the pitch | `bujius_checkout` program · `@bujius/checkout-sdk` · `@bujius/checkout-react` · the demo store, which uses only the SDK | MVP, by the Sat 14:00 gate |
+| **Open** — the pitch | `bujius_checkout` program · `@bujius/checkout-sdk` · `@bujius/checkout-react` · the demo store, which runs on both packages as published on npm | MVP, by the Sat 14:00 gate |
 | **Open** | verifiable build, MIT licence, npm `0.1.0` | after the gate |
 | **Service** — a convenience on top | `apps/hosted`: charges API, hosted checkout page, signed webhook sent once, Helius trigger, Postgres | after the gate |
 

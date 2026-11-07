@@ -4,16 +4,15 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "packages": "pnpm --filter @bujius/checkout-sdk --filter @bujius/checkout-react run build",
-    "dev": "pnpm run packages && next dev",
-    "build": "pnpm run packages && next build",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run"
   },
   "dependencies": {
-    "@bujius/checkout-react": "workspace:*",
-    "@bujius/checkout-sdk": "workspace:*",
+    "@bujius/checkout-react": "~0.1.0",
+    "@bujius/checkout-sdk": "~0.1.4",
     "@solana/web3.js": "~1.98.4",
     "next": "~15.5.0",
     "react": "~19.1.0",
