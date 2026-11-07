@@ -103,6 +103,12 @@
 
 ## Noticed (outside any card)
 
+- **`/c/[id]` for an unknown id shows "This page could not load" on the deployment, not "Charge not
+  found"** (checked Sat 2026-11-07 on `ch_does_not_exist` and `ch_mock_paid`). Locally with the same code
+  it shows "Charge not found", and `curl` to the status route answers the right `404`
+  `CHARGE_NOT_FOUND`. So the server-side read of the page gets something else on Vercel. Owner: B
+  (`B7`'s test 5). No Vercel logs were available to A.
+
 - **The Vercel project deploys a private copy, not this repository:** `Cristierre/bujius-checkout`.
   A push to `main` does not reach the store until it is also pushed there. Connect the project to
   `alxdfm/bujius-checkout` before the gate. Owner: B, with A for the GitHub app.
