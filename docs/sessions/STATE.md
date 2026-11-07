@@ -48,8 +48,10 @@
 |---|---|---|
 | A | `A8` hosted backend: schema, API keys, the charges API (needs `B7`'s scaffold of `apps/hosted`) | Sat 16:00–19:30 |
 | B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
-| B | `B6`: record the phone and desktop takes on the deployed store | overdue, the gate has passed |
+| B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
+- The Neon database exists, created through Vercel. It still has to be connected to the
+  `apps/hosted` project, which does not exist yet, and `DATABASE_URL` goes to A outside the repository.
 - **To close `B7` once `A9` is on `main`:** make `app/c/[id]/page.tsx` read
   `GET /v1/charges/:id/status`, point the panel's polling at it, delete `mock-charges.ts` and
   `mock-status/`, and deploy the second Vercel project. Then test on the deployment:
@@ -84,7 +86,7 @@
 ## Open
 
 - MLH rules questions (Discord + e-mail, 2026-11-05) — unanswered.
-- `PLAN.md` §9 item 7 — Vercel, Neon, Helius devnet key, npm scope `@bujius`.
+- `PLAN.md` §9 item 7 — Vercel, Helius devnet key.
 
 ## Noticed (outside any card)
 
