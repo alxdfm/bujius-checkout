@@ -3,22 +3,19 @@
 > Describes the present and does not grow: a line that became past tense is deleted, not
 > rewritten as history. History goes in `YYYY-MM-DD.md` beside this file.
 
-**Updated:** 2026-11-06 (Fri, during the event)
+**Updated:** 2026-11-07 (Sat, during the event)
 
 ## Where we are
 
-- **`B5`'s code is ready, the card is not done:** cart, checkout, order page and every state, with the
-  status route already on `verifySplitPayment` (the card's `findPayment`-only step is obsolete: `A5`
-  landed). Run in Edge with no wallet, and against a real devnet payment for the receipt. Still to
-  do: pay on the deployed store from a phone and from a desktop wallet.
+- **`B6`'s code is in:** `PAY_STRATEGY=program` on the deployed store, the status route on
+  `verifySplitPayment`, and `paid_late` and `invalid` with their own screens. Still to do: run the
+  gate with A (`A6`) and record the two takes.
+- **`B3` and `B5` are done** on https://bujius-checkout.vercel.app: a phone payment of 0.10 USDC and
+  a desktop payment of 0.20 USDC through the program, both verified, with the checkout moving to
+  `Paid` by itself.
 - **`B4` is done:** `BujiusCheckoutWalletProvider`, `PayButton`, `usePaymentStatus`, `openCheckout`.
   Contracts §5 now has `onError(code, sentence)`, `className?` and the button's lock after a send.
-  Not yet run in a real browser or with a real wallet: that is `B5`.
-- **`B3`'s code is on `main`, the card is not done:** `apps/demo-store` and `PaymentQR` run locally
-  against devnet. Still to do: the Vercel deploy and the first phone payment. The QR has not been
-  seen in a browser yet.
 - **`B2` is done** and on `main`: `createTransactionRequestHandler`, with `resolve(key, account)`.
-  Not yet called by a real wallet: that is `B3`.
 - **`B1` is done** and on `main`: `toBaseUnits`, `fromBaseUnits`, `newReference`, `paymentUrl`,
   `computeSplit`, `buildSplitPayment` with `strategy: 'transfers'`.
 - **`A5` is done:** `verifySplitPayment(connection, signature, config, amount, reference, expiresAt?)`
@@ -42,8 +39,7 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
-| B | `B3`: Vercel deploy from `main` (root `apps/demo-store`) and the first phone payment; **read *Noticed* first** | Fri 19:30–21:30 |
-| B | `B5`: phone and desktop payments on the deployed store | Fri 23:00–02:00 |
+| B | `B6`: run the gate with A, record the phone and desktop takes on the deployed store | Sat 09:00–14:00 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
@@ -57,6 +53,12 @@
 
 ## Noticed (outside any card)
 
+- **The Vercel project deploys a private copy, not this repository:** `Cristierre/bujius-checkout`.
+  A push to `main` does not reach the store until it is also pushed there. Connect the project to
+  `alxdfm/bujius-checkout` before the gate. Owner: B, with A for the GitHub app.
+- **A payer with no USDC account hears "We could not read your account."** `buildSplitPayment`
+  answers `INVALID_ACCOUNT`, so a wallet with SOL only gets a sentence that does not say why, against
+  the "never vague" rule. Changing it is a contracts §4 change, to agree with A.
 - `anchor` needs `~/.local/share/solana/install/active_release/bin` on `PATH`.
 - **`buildCreateSplit` rejects off-curve recipients; `buildSplitPayment` accepts them.**
   `program/create-split.ts` uses the default `allowOwnerOffCurve = false`. Owner: A.
