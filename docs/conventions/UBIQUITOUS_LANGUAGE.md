@@ -39,6 +39,7 @@
 | Term | Meaning | In code |
 |---|---|---|
 | **order** | The demo store's purchase. Lives in a signed **order token**, never in a database | `orderId`, order token |
+| **category** | A group of the demo store's products, for browsing. Never affects a price | `category`, `CATEGORIES` |
 | **charge** | The hosted service's payment request, created by `POST /v1/charges` | `charges`, `ch_…` |
 | **hold** | The first payer to ask for a charge's transaction holds it; anyone else gets `ORDER_HELD` | `payer` column |
 | **verifier** | `verifySplitPayment` — judges a transaction by balances against the config and the amount | `verifySplitPayment` |

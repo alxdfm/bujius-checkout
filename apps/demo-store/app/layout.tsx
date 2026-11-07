@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { CartLink } from './cart-link';
 import './globals.css';
+import { SiteHeader } from './site-header';
 
 export const metadata: Metadata = {
   title: 'Demo Store — Bujius Checkout',
@@ -13,14 +12,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
-        <header className="mx-auto flex max-w-2xl items-center justify-between px-6 pt-6 text-sm">
-          <Link href="/" className="font-medium">
-            Demo Store
-          </Link>
-          <CartLink />
-        </header>
-        <main className="mx-auto max-w-2xl px-6 py-10">{children}</main>
+      <body className="min-h-screen bg-canvas text-zinc-900 antialiased">
+        <SiteHeader />
+        <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
       </body>
     </html>
   );

@@ -187,6 +187,26 @@
 
 ---
 
+### B11 · Demo store: a marketplace storefront
+**S** · partner · `b/b11-storefront` · Sat, before the takes
+
+- **Depends:** `B8`.
+- **Why:** the store the video opens on looks like a real marketplace.
+- **Already decided:** the layout conventions of a large marketplace (dense header, search, categories,
+  product grid, buy box, cart with a subtotal) in the store's own palette · no logo, name or style
+  guide of any other company · no fake reviews, stock or delivery promises · a line saying it is a
+  demo on devnet · a catalog of twelve products; the first three keep their SKUs and prices · the
+  store depends on `@bujius/checkout-sdk` and `@bujius/checkout-react` from npm, not the workspace;
+  `apps/hosted` is unchanged.
+- **Touch only these files:** `apps/demo-store/**`, this card, `docs/conventions/UBIQUITOUS_LANGUAGE.md`
+  (append), `pnpm-lock.yaml`, `pnpm-workspace.yaml` (the install's release-age exclusion),
+  `docs/architecture/OVERVIEW.md` (what the store uses), `docs/sessions/STATE.md`.
+- **Never:** change `lib/order-*`, the routes in `app/api/`, or the logic of the checkout and order
+  pages — the approved payment flow stays as it is.
+- **Done when:** `pnpm verify` green · a phone purchase, direct and hosted, on the deployed store.
+
+---
+
 ### B10 · The video and the submission
 **M** · partner · no branch · Sun 08:00–13:45
 

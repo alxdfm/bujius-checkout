@@ -1,1 +1,11 @@
 @import 'tailwindcss';
+
+/* The store's own palette: a graphite header and a blue action. Not any other product's. */
+@theme {
+  --color-brand-950: #1f2733;
+  --color-brand-800: #36414f;
+  --color-brand-700: #2563eb;
+  --color-brand-600: #1d4ed8;
+  --color-brand-100: #e4ebf5;
+  --color-canvas: #eef0f3;
+}

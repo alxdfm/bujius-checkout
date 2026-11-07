@@ -27,8 +27,9 @@ const order = (over: Partial<OrderPayload> = {}): OrderPayload => ({
 });
 
 describe('catalog', () => {
-  it('has three products priced in USDC', () => {
-    expect(CATALOG).toHaveLength(3);
+  it('has products, each with its own SKU', () => {
+    expect(CATALOG.length).toBeGreaterThan(0);
+    expect(new Set(CATALOG.map(({ sku }) => sku)).size).toBe(CATALOG.length);
   });
 
   it('prices from the catalog, in base units', () => {

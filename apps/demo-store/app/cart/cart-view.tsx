@@ -11,6 +11,7 @@ import { saveCart, useCart } from '@/lib/use-cart';
 interface PricedProduct {
   sku: string;
   name: string;
+  emoji: string;
   /** Base units, as a string. */
   units: string;
 }
@@ -45,6 +46,7 @@ export function CartView({ products, hostedEnabled }: { products: PricedProduct[
   const lines = cart.filter((line) => bySku.has(line.sku));
   // This total is for the screen: the order is priced again on the server.
   const total = lines.reduce((sum, line) => sum + BigInt(bySku.get(line.sku)!.units) * BigInt(line.qty), 0n);
+  const itemCount = lines.reduce((sum, line) => sum + line.qty, 0);
 
   if (lines.length === 0) {
     return (
@@ -96,14 +98,24 @@ export function CartView({ products, hostedEnabled }: { products: PricedProduct[
     });
 
   return (
-    <>
-      <ul className="mt-8 divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
+    <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <ul className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
         {lines.map(({ sku, qty }) => {
           const product = bySku.get(sku)!;
           return (
-            <li key={sku} className="flex items-center justify-between gap-4 p-4">
-              <div>
-                <p className="font-medium">{product.name}</p>
+            <li key={sku} className="flex items-center gap-4 p-4">
+              <Link
+                href={`/products/${sku}`}
+                aria-hidden="true"
+                tabIndex={-1}
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-canvas text-3xl"
+              >
+                {product.emoji}
+              </Link>
+              <div className="min-w-0 flex-1">
+                <Link href={`/products/${sku}`} className="font-medium hover:underline">
+                  {product.name}
+                </Link>
                 <p className="text-sm text-zinc-600">{formatUsdc(BigInt(product.units) * BigInt(qty))} USDC</p>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -119,25 +131,30 @@ export function CartView({ products, hostedEnabled }: { products: PricedProduct[
           );
         })}
       </ul>
-      <div className="mt-6 flex items-center justify-between">
-        <p className="font-medium">Total: {formatUsdc(total)} USDC</p>
+      <aside aria-label="Order summary" className="rounded-lg border border-zinc-200 bg-white p-4">
+        <p className="font-medium">
+          Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'}): {formatUsdc(total)} USDC
+        </p>
         <button
           type="button"
           onClick={checkout}
           disabled={busy}
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+          className="mt-3 w-full rounded bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
         >
           {busy ? 'Creating order…' : 'Go to checkout'}
         </button>
-      </div>
-      {hostedEnabled && (
-        <div className="mt-3 text-right">
-          <button type="button" onClick={payHosted} disabled={busy} className="text-sm underline disabled:opacity-50">
+        {hostedEnabled && (
+          <button
+            type="button"
+            onClick={payHosted}
+            disabled={busy}
+            className="mt-2 w-full rounded border border-brand-700 bg-white px-4 py-2 text-sm font-medium text-brand-800 hover:bg-brand-100 disabled:opacity-50"
+          >
             Pay through the hosted checkout
           </button>
-        </div>
-      )}
-      {error && <p className="mt-3 text-right text-sm text-red-700">{error}</p>}
-    </>
+        )}
+        {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+      </aside>
+    </div>
   );
 }
