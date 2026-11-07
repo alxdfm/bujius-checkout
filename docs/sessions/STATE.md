@@ -76,7 +76,7 @@
   `@bujius/checkout-react@0.1.0` on npm (README inside). The Devpost draft is outside the repository
   (`~/.config/bujius-checkout/devpost-draft.md`); it leaves out the §12 lines that are not true of the
   build (any-endpoint, point of sale, "exactly once"). Left: the video link in the Devpost text after
-  `B10`. The published SDK `0.1.2` has no README on its npm page; the next SDK version carries it.
+  `B10`. The SDK `0.1.3` carries its README: `cd packages/sdk && npm publish --access public` (passkey) is what is left.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
