@@ -1,6 +1,6 @@
 {
   "name": "@bujius/checkout-sdk",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Atomic payment splits on Solana: one transaction pays the merchant and every partner, with the split enforced on-chain.",
   "license": "MIT",
   "homepage": "https://github.com/alxdfm/bujius-checkout#readme",
