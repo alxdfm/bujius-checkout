@@ -10,12 +10,13 @@
 - **`B8` is done** (https://bujius-checkout.vercel.app): "Pay through the hosted checkout" on the cart,
   `POST /api/hosted-charges`, the receiver, and `/orders/hosted?chargeId=…`, which reads
   `GET /v1/charges/:id`. A hosted payment (`ch_295b497f…`) reached `paid` with a `200` delivery.
-- **`B7`'s code is in and deployed** (https://bujius-checkout-hosted.vercel.app): `/c/[id]` reads the
-  status route and the mock is gone. Passed on the deployment: the QR, a phone payment, the redirect to
-  `successUrl` with `chargeId`, "Charge not found" for an unknown id and `/c/ch_mock_paid`, and the
-  second payer's sentence through the page's button. Without `NEXT_PUBLIC_BASE_URL`, `/c/:id` shows
-  "This page could not load" and the name of the variable reaches only the log (checked on a local
-  production build, not on a Vercel preview). The two checks left are under **Next**.
+- **`B7` is done** (https://bujius-checkout-hosted.vercel.app): `/c/[id]` reads the status route and
+  the mock is gone. Passed on the deployment: the QR, a phone payment, the redirect to `successUrl`
+  with `chargeId`, an open tab turning `Paid` by itself on a charge with no `successUrl`
+  (`ch_8de3ee2e…`), "Charge not found" for an unknown id and `/c/ch_mock_paid`, the second payer's
+  sentence through the page's button, and an open tab turning "Charge expired" by itself on a 60 s
+  charge. Without `NEXT_PUBLIC_BASE_URL`, `/c/:id` shows "This page could not load" and the name of the
+  variable reaches only the log (checked on a local production build, not on a Vercel preview).
 - **`A9` and `A10` are verified on the deployment** (https://bujius-checkout-hosted.vercel.app, Sat
   2026-11-07): a real 0.10 USDC payment through `/pay/:reference` turned the charge `paid` with one
   `webhook_deliveries` row; with the Helius webhook registered (`rawDevnet`, `ANY`, auth header =
@@ -69,16 +70,9 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A11` (fixes, freeze, the submission's links) — after the two open checks above | Sun 08:00 |
-| B | `B7`: the two checks below | now |
 | B | `B9`: READMEs, the architecture picture, Devpost draft, npm react. Start with the package's blockers under **Noticed** | Sat 23:00–02:00 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
-- **To close `B7`, on the deployment:**
-  1. A charge with no `successUrl`: paid with its page open, it turns `Paid` with no reload, and the
-     explorer link opens the transaction. `ch_127e7028…` was paid; nobody has confirmed the screen.
-  2. A charge with `expiresInSeconds: 60`, unpaid: an open tab shows "Charge expired" by itself. The
-     status route turned `expired` 95 s after the expiry (polled every 5 s) and a fresh load of the page
-     shows it; the open tab is not confirmed.
 - **Agreed between A and B for `A8`/`A9`; `CONTRACTS.md` §6 changes with A's code that needs it:**
   `GET /v1/charges/:id/status` answers `{ status, signature, reference, amount, expiresAt, successUrl }`,
   and an unknown charge gets a `404` with §6's error envelope. `amount` is base units as a string
