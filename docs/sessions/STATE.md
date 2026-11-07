@@ -11,10 +11,11 @@
   2026-11-07): a real 0.10 USDC payment through `/pay/:reference` turned the charge `paid` with one
   `webhook_deliveries` row; with the Helius webhook registered (`rawDevnet`, `ANY`, auth header =
   `HELIUS_WEBHOOK_SECRET`), a payment with no page open and no status poll turned `paid` within 10 s
-  and left one row. **Still open for their Done when:** a 2xx from the demo store's receiver (the
-  deployed store answers `404`: it needs `B8`'s deploy with `HOSTED_WEBHOOK_SECRET`), and a phone
-  payment through B's page. Known limit: `findPayment` returns the first successful signature, so a
-  wrong-amount transaction sent to a reference first keeps the charge `pending`.
+  and left one row. The demo store's receiver accepted the signed webhook with `200` (a resend of `ch_66abd7e3…`, attempt 2,
+  after the first attempt got `500` while the store lacked `HOSTED_WEBHOOK_SECRET`). **Still open for
+  their Done when:** a phone payment through B's page `/c/[id]`. Known limit: `findPayment` returns the
+  first successful signature, so a wrong-amount transaction sent to a reference first keeps the charge
+  `pending`.
 - **`A8` is done:** `POST` and `GET /v1/charges` on the Neon database (migration `0000` applied),
   strict zod bodies, API keys stored as SHA-256, `scripts/create-merchant.ts` prints the key and
   webhook secret once. `curl` creates a charge and returns `checkoutUrl` and `paymentUrl`; the same
