@@ -7,6 +7,9 @@
 
 ## Where we are
 
+- **`B4` is done:** `BujiusCheckoutWalletProvider`, `PayButton`, `usePaymentStatus`, `openCheckout`.
+  Contracts §5 now has `onError(code, sentence)`, `className?` and the button's lock after a send.
+  Not yet run in a real browser or with a real wallet: that is `B5`.
 - **`B3`'s code is on `main`, the card is not done:** `apps/demo-store` and `PaymentQR` run locally
   against devnet. Still to do: the Vercel deploy and the first phone payment. The QR has not been
   seen in a browser yet.
@@ -36,6 +39,7 @@
 |---|---|---|
 | A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
 | B | `B3`: Vercel deploy from `main` (root `apps/demo-store`) and the first phone payment; **read *Noticed* first** | Fri 19:30–21:30 |
+| B | `B5`: cart, checkout, order page and every state | Fri 23:00–02:00 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
   partner 1 000 bps, platform 250 bps, devnet USDC). Keypairs live in
@@ -71,6 +75,15 @@
   before `buildSplitPayment`. A payer the builder then refuses (no token account, a leg's wallet,
   off-curve) has already taken the hold, and the real payer would get `ORDER_HELD`. Check before
   the hold, or release it on failure. Owner: A.
+- **`usePaymentStatus` stops at `expired`, so it never reaches `paid_late`.** A payment landing just
+  after the expiry would stay unseen. No card or contract covers it. Plan for `B5`'s status route:
+  keep answering `pending` for a few seconds past the expiry before `expired`.
+- **`@bujius/checkout-react` is not ready for `B9` yet.** `wallet-provider.tsx` imports the modal's
+  CSS, which Next handles and a plain Node `require` does not. `PayButton` deserializes legacy
+  transactions only, and `codeOf` tells `ORDER_PAID` from `ORDER_HELD` by the English sentence, so
+  "any Solana Pay endpoint" is not fully true: do not say it in the pitch.
+- **Failures that only reach the console:** `WalletProvider` has no `onError`, so a failed connection
+  shows the payer nothing. `usePaymentStatus` keeps polling after a `4xx`.
 - **`packages/sdk/__tests__/unit.test.ts` is at 518 lines, over the 400 limit.** Splitting it is on
   no card; the tracks have to agree who does it. `B2`'s tests went to
   `__tests__/handler.unit.test.ts` so as not to grow it.
