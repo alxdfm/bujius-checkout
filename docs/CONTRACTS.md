@@ -223,9 +223,13 @@ receipt shows its exact amount ("0.0875 USDC"),** because rounded legs would not
 | `GET·POST·OPTIONS /pay/:reference` | public | the SDK handler; `resolve` reads the charge, then **holds it for the first payer** — a conditional update setting `payer` only when empty or equal → `ORDER_HELD` for anyone else |
 | `POST /v1/charges/:id/webhook/resend` | key | sends the charge's event again → `200 { event, attempt, statusCode, error }`; `409 CHARGE_NOT_PAID` until paid, `409 NO_WEBHOOK_URL` without a `webhookUrl` |
 | `POST /hooks/helius` | `Authorization` = `HELIUS_WEBHOOK_SECRET` | for each transaction, the pending charges whose `reference` is among its account keys → verify → flip → webhook; answers `200` at once |
-| `GET /c/:id` | public | the hosted checkout page (`B7`) |
+| `GET /c/:id` | public | the hosted checkout page (`B7`). After `paid`, it redirects to the charge's `successUrl` with `?chargeId=<id>` appended (kept alongside any query the URL already has); only `https:` URLs are followed |
 
 Errors: `{ "error": { "code", "message" } }`.
+
+**`chargeId` on the `successUrl` is a locator, never proof of payment:** anyone can type a URL with an id.
+The store uses it to find its order, then confirms the payment from the signed webhook or
+`GET /v1/charges/:id` (with its API key) before it ships anything.
 
 **Formats, in every charge response and in the webhook:** `amount` is base units as a string
 (`"12500000"`), `expiresAt` is ISO 8601. Only the `POST /v1/charges` body takes a decimal
