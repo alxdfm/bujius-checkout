@@ -68,7 +68,8 @@
 | Track | Card | Slot (Brasília) |
 |---|---|---|
 | A | `A11` (fixes, freeze, the submission's links) — after the two open checks above | Sun 08:00 |
-| B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
+| B | `B11`: the marketplace storefront, on `@bujius/checkout-sdk` and `@bujius/checkout-react` from npm. Left: deploy, then a phone purchase, direct and hosted | before the takes |
+| B | `B6`: record the phone and desktop takes on the deployed store, after `B11` | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
 - **`B9` is done and on `main`:** the root README, both package READMEs, `docs/architecture.svg`, and
   `@bujius/checkout-react@0.1.0` on npm (README inside). The Devpost draft is outside the repository
@@ -162,10 +163,12 @@
   left open after a reload, can still pay twice before the first one confirms.
 - **OneDrive can break `next build` on this machine** (`EINVAL ... readlink` on a file in `.next`).
   Delete `apps/demo-store/.next` and build again.
-- **`@bujius/checkout-react` is not ready for `B9` yet.** `wallet-provider.tsx` imports the modal's
+- **`@bujius/checkout-react`'s limits, in its README.** `wallet-provider.tsx` imports the modal's
   CSS, which Next handles and a plain Node `require` does not. `PayButton` deserializes legacy
   transactions only, and `codeOf` tells `ORDER_PAID` from `ORDER_HELD` by the English sentence, so
   "any Solana Pay endpoint" is not fully true: do not say it in the pitch.
+- **The demo store takes the packages from npm; `apps/hosted` still uses the workspace.** A fix in
+  `packages/` reaches the store only after a publish and a version bump in its `package.json`.
 - **Failures that only reach the console:** `WalletProvider` has no `onError`, so a failed connection
   shows the payer nothing. `usePaymentStatus` keeps polling after a `4xx`.
 - **`packages/sdk/__tests__/unit.test.ts` is at 518 lines, over the 400 limit.** Splitting it is on
