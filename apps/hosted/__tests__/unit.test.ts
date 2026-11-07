@@ -1,11 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { safeSuccessUrl } from '../app/c/[id]/charge';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { successRedirectUrl } from '../app/c/[id]/charge';
 import { formatUsdc } from '../app/c/[id]/format-usdc';
+import { chargeStatusPath, parseCharge, readCharge } from '../app/c/[id]/read-charge';
 import { isSendInFlight, latestSentAt, parseSentAt, SEND_WINDOW_MS } from '../app/c/[id]/send-lock';
 
-describe('safeSuccessUrl', () => {
-  it('keeps an https URL', () => {
-    expect(safeSuccessUrl('https://shop.example/thanks?order=1')).toBe('https://shop.example/thanks?order=1');
+describe('successRedirectUrl', () => {
+  it('keeps an https URL and adds the charge id', () => {
+    expect(successRedirectUrl('https://shop.example/thanks?order=1', 'ch_1')).toBe(
+      'https://shop.example/thanks?order=1&chargeId=ch_1',
+    );
   });
 
   it.each([
@@ -20,15 +23,106 @@ describe('safeSuccessUrl', () => {
     'not a url',
     '',
   ])('refuses %j', (raw) => {
-    expect(safeSuccessUrl(raw)).toBeNull();
+    expect(successRedirectUrl(raw, 'ch_1')).toBeNull();
   });
 
   it('refuses a charge with none', () => {
-    expect(safeSuccessUrl(null)).toBeNull();
+    expect(successRedirectUrl(null, 'ch_1')).toBeNull();
   });
 
   it('returns the checked form, not the raw text', () => {
-    expect(safeSuccessUrl('https://shop.example/thanks\n')).toBe('https://shop.example/thanks');
+    expect(successRedirectUrl('https://shop.example/thanks\n', 'ch_1')).toBe(
+      'https://shop.example/thanks?chargeId=ch_1',
+    );
+  });
+
+  it('leaves the merchant query exactly as written', () => {
+    expect(successRedirectUrl('https://shop.example/thanks?sig=a%20b&t=1', 'ch_1')).toBe(
+      'https://shop.example/thanks?sig=a%20b&t=1&chargeId=ch_1',
+    );
+  });
+
+  it('keeps a chargeId of the merchant first, and a fragment last', () => {
+    expect(successRedirectUrl('https://shop.example/thanks?chargeId=mine#top', 'ch_1')).toBe(
+      'https://shop.example/thanks?chargeId=mine&chargeId=ch_1#top',
+    );
+  });
+
+  it('encodes the charge id', () => {
+    expect(successRedirectUrl('https://shop.example/thanks', 'a&b=c')).toBe(
+      'https://shop.example/thanks?chargeId=a%26b%3Dc',
+    );
+  });
+});
+
+describe('reading a charge', () => {
+  const CHARGE = {
+    status: 'pending',
+    signature: null,
+    reference: 'Ref111',
+    amount: '12500000',
+    expiresAt: '2026-11-07T20:00:00.000Z',
+    successUrl: null,
+  };
+  const stubFetch = (status: number, body: unknown) => {
+    const fetchMock = vi.fn(async (_url: string) => Response.json(body, { status }));
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('encodes the id in the path', () => {
+    expect(chargeStatusPath('a/b')).toBe('/v1/charges/a%2Fb/status');
+  });
+
+  it('asks the status route and answers the charge', async () => {
+    const fetchMock = stubFetch(200, CHARGE);
+    await expect(readCharge('https://pay.example', 'ch_1')).resolves.toEqual(CHARGE);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://pay.example/v1/charges/ch_1/status');
+  });
+
+  it('answers null for an unknown charge', async () => {
+    stubFetch(404, { error: { code: 'CHARGE_NOT_FOUND', message: 'No charge with this id.' } });
+    await expect(readCharge('https://pay.example', 'ch_1')).resolves.toBeNull();
+  });
+
+  it.each([
+    ['a platform page', () => new Response('<!DOCTYPE html>', { status: 404 })],
+    ['another code', () => Response.json({ error: { code: 'NO_ROUTE' } }, { status: 404 })],
+  ])('throws on a 404 from %s, so a wrong base URL is not "not found"', async (_name, answer) => {
+    vi.stubGlobal('fetch', vi.fn(async () => answer()));
+    await expect(readCharge('https://pay.example', 'ch_1')).rejects.toThrow('404');
+  });
+
+  it('throws on a failure, so the page does not call it "not found"', async () => {
+    stubFetch(500, { error: { code: 'INTERNAL', message: 'Failed.' } });
+    await expect(readCharge('https://pay.example', 'ch_1')).rejects.toThrow('500');
+  });
+
+  it('throws on an answer it cannot read', async () => {
+    stubFetch(200, { status: 'pending' });
+    await expect(readCharge('https://pay.example', 'ch_1')).rejects.toThrow('unknown shape');
+  });
+
+  it.each([
+    ['null', null],
+    ['an unknown status', { ...CHARGE, status: 'invalid' }],
+    ['no reference', { ...CHARGE, reference: undefined }],
+    ['an empty reference', { ...CHARGE, reference: '' }],
+    ['a decimal amount', { ...CHARGE, amount: '12.50' }],
+    ['a zero amount', { ...CHARGE, amount: '0' }],
+    ['a number for an amount', { ...CHARGE, amount: 12500000 }],
+    ['an unreadable expiry', { ...CHARGE, expiresAt: 'soon' }],
+  ])('refuses %s', (_name, body) => {
+    expect(parseCharge(body)).toBeNull();
+  });
+
+  it('reads a paid charge with its signature and success URL', () => {
+    const paid = { ...CHARGE, status: 'paid', signature: 'Sig111', successUrl: 'https://shop.example/thanks' };
+    expect(parseCharge(paid)).toEqual(paid);
   });
 });
 

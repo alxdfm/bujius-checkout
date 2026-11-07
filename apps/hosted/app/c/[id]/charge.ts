@@ -13,17 +13,24 @@ export interface Charge {
 }
 
 /**
- * Only an `https:` URL leaves this page. A charge's `successUrl` comes from a merchant's request,
- * and a `javascript:` URL would run on this origin.
+ * Where a paid charge sends its payer. Only an `https:` URL leaves this page: a charge's
+ * `successUrl` comes from a merchant's request, and a `javascript:` URL would run on this origin.
+ * It carries `chargeId` because the merchant writes this URL before the charge has an id.
  */
-export function safeSuccessUrl(raw: string | null): string | null {
+export function successRedirectUrl(raw: string | null, chargeId: string): string | null {
   if (!raw) {
     return null;
   }
   try {
     // The parsed form: the parser drops tabs and newlines, so the raw text is not what was checked.
     const url = new URL(raw);
-    return url.protocol === 'https:' ? url.href : null;
+    if (url.protocol !== 'https:') {
+      return null;
+    }
+    // Appended as text: going through `searchParams` rewrites the merchant's query, which they may have signed.
+    const param = `chargeId=${encodeURIComponent(chargeId)}`;
+    url.search = url.search ? `${url.search}&${param}` : `?${param}`;
+    return url.href;
   } catch {
     return null;
   }

@@ -1,10 +1,10 @@
 import { paymentUrl } from '@bujius/checkout-sdk';
 import { redirect } from 'next/navigation';
-import { safeSuccessUrl } from './charge';
+import { successRedirectUrl } from './charge';
 import { ChargeExpired, ChargeNotFound, ChargePaid } from './charge-outcome';
 import { CheckoutPanel } from './checkout-panel';
 import { formatUsdc } from './format-usdc';
-import { readMockCharge } from './mock-charges';
+import { chargeStatusPath, readCharge } from './read-charge';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,14 +18,15 @@ function required(name: string): string {
 
 export default async function HostedCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const baseUrl = required('NEXT_PUBLIC_BASE_URL').replace(/\/+$/, '');
   // Read here first, so an unknown charge never reaches the panel's polling and a finished one
   // never shows a QR.
-  const charge = readMockCharge(id);
+  const charge = await readCharge(baseUrl, id);
   if (!charge) {
     return <ChargeNotFound />;
   }
 
-  const successUrl = safeSuccessUrl(charge.successUrl);
+  const successUrl = successRedirectUrl(charge.successUrl, id);
   if (charge.status === 'paid' && successUrl) {
     redirect(successUrl);
   }
@@ -36,14 +37,14 @@ export default async function HostedCheckoutPage({ params }: { params: Promise<{
     return <ChargeExpired />;
   }
 
-  const transactionRequestUrl = `${required('NEXT_PUBLIC_BASE_URL').replace(/\/+$/, '')}/pay/${charge.reference}`;
+  const transactionRequestUrl = `${baseUrl}/pay/${charge.reference}`;
   return (
     <CheckoutPanel
       chargeId={id}
       amount={formatUsdc(BigInt(charge.amount))}
       paymentLink={paymentUrl(transactionRequestUrl)}
       transactionRequestUrl={transactionRequestUrl}
-      statusUrl={`/c/${id}/mock-status`}
+      statusUrl={chargeStatusPath(id)}
       successUrl={successUrl}
       secondsLeft={Math.floor((Date.parse(charge.expiresAt) - Date.now()) / 1000)}
       rpcEndpoint={required('NEXT_PUBLIC_RPC_URL')}
