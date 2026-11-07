@@ -7,6 +7,11 @@
 
 ## Where we are
 
+- **`A6` is done — the gate passed (Sat 2026-11-07), tag `gate`.** Phone (Solflare, 0.20 USDC,
+  `5gWMyGgY…AruUZ`) and desktop (Backpack, 0.25 USDC, `56MMtDUe…`) purchases on the deployed store
+  through the program: each split exact on-chain, order page `Paid`. A headless run also checked
+  CORS, the transaction request, the status route and `ORDER_PAID` on a second pay. Still B's:
+  the two backup takes.
 - **`B6`'s code is in:** `PAY_STRATEGY=program` on the deployed store, the status route on
   `verifySplitPayment`, and `paid_late` and `invalid` with their own screens. Still to do: run the
   gate with A (`A6`) and record the two takes.
@@ -38,7 +43,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A6` the gate run (needs `B6`) | Sat 11:30–14:00 |
+| A | `A7` verifiable build, licence check, npm `0.1.0` | Sat 14:00–16:00 |
 | B | `B6`: run the gate with A, record the phone and desktop takes on the deployed store | Sat 09:00–14:00 |
 
 - Devnet test split config: `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N` (merchant `HFkj…`,
