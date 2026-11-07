@@ -106,12 +106,10 @@
   in `--filter './packages/*'` and `--filter './apps/*'` (root `package.json`) match no project
   there ("No projects matched"). Until fixed, run
   `pnpm --filter "./packages/*" --if-present run build` by hand on Windows.
-- **The SDK's ESM bundle does not load in Node 20 or 22 — including the published `0.1.0`.**
-  `strategies/program.ts` has `import { BN, … } from '@coral-xyz/anchor'`, and Node 22.22.3 (the
-  version `.nvmrc` pins) and 20.15.1 refuse it: "Named export 'BN' not found". Node 24.18.0 loads it,
-  and so does the CJS bundle on every version. `pnpm verify` does not catch it. Bundlers (Next, tsx)
-  are not affected; a direct Node ESM import is. `package.json` declares `engines: node >=22`, so
-  the fix ships as `0.1.1` (import the default export and destructure it). Owner: A.
+- **The published `@bujius/checkout-sdk@0.1.0` ESM bundle does not load in Node 22** ("Named export
+  'BN' not found"); `0.1.1` fixes it and is not published yet — run
+  `cd packages/sdk && npm publish --access public` (passkey, in a normal terminal). The CJS bundle
+  and bundlers (Next, tsx) were never affected. Node 20 is outside `engines` (`>=22`). Owner: A.
 - **`/c/[id]` copies from the demo store:** `format-usdc`, `send-lock`, `use-send-lock`, and in
   `checkout-panel.tsx` `useCountdown`, `clock` and nearly all of the panel's JSX, because neither
   app may import from the other and `apps/hosted/lib/` is A's. A shared home would be
