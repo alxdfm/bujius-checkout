@@ -11,6 +11,7 @@ primitive for Bujius Pay, during the MLH Solana Hackathon (November 2026). Devne
 | | |
 |---|---|
 | Program (devnet) | `LNv2EvYZFN1fBJeQPDGffRxVYPMCGpa99yCcWDSDdjN` |
+| Verifiable build (SHA-256) | `7311c0155b90e5bb857bc1c2477ec46444ec6a6a555b9935f1dd7336ee76b984` — `anchor build --verifiable`; equals the bytecode deployed on devnet |
 | `@bujius/checkout-sdk` | not published yet |
 | `@bujius/checkout-react` | not published yet |
 
@@ -21,6 +22,9 @@ pnpm install
 pnpm verify          # typecheck, lint, unit tests, build
 pnpm test:program    # anchor test (Anchor 0.31.1, Solana 4.2.2)
 ```
+
+Verify the deployed program yourself: `anchor build --verifiable` (Docker), then compare
+`sha256sum target/verifiable/bujius_checkout.so` with `solana program dump <program id> out.so -u devnet && sha256sum out.so`.
 
 Interfaces: [`docs/CONTRACTS.md`](docs/CONTRACTS.md) · overview:
 [`docs/architecture/OVERVIEW.md`](docs/architecture/OVERVIEW.md).
