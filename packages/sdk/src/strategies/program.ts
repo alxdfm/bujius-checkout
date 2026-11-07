@@ -1,4 +1,4 @@
-import { BN, BorshInstructionCoder, type Idl } from '@coral-xyz/anchor';
+import anchor, { BorshInstructionCoder, type Idl } from '@coral-xyz/anchor';
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
@@ -16,6 +16,8 @@ import type { SplitConfig } from '../program/config';
 import idl from '../program/idl.json';
 import { PROGRAM_ID } from '../program/pda';
 
+// Node's ESM loader cannot see `BN` as a named export of this CommonJS package.
+const { BN } = anchor;
 const coder = new BorshInstructionCoder(idl as Idl);
 
 /**
