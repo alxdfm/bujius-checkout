@@ -7,6 +7,13 @@
 
 ## Where we are
 
+- **`A9`'s code is in, verified on devnet from a local server:** a real 0.10 USDC payment through
+  `/pay/:reference` turned the charge `paid`; 8 simultaneous status polls left one `paid` row and
+  one `webhook_deliveries` row; a second payer got `ORDER_HELD`; a paid charge answers `ORDER_PAID`.
+  **Still open for `A9`'s Done when:** a phone payment through B's page on a deployed hosted app,
+  and a 2xx from the demo store's receiver (the deployed store answered `404` — it needs the
+  `B8` deploy with `HOSTED_WEBHOOK_SECRET`). Known limit: `findPayment` returns the first successful
+  signature, so a wrong-amount transaction sent to a reference first keeps the charge `pending`.
 - **`A8` is done:** `POST` and `GET /v1/charges` on the Neon database (migration `0000` applied),
   strict zod bodies, API keys stored as SHA-256, `scripts/create-merchant.ts` prints the key and
   webhook secret once. `curl` creates a charge and returns `checkoutUrl` and `paymentUrl`; the same
@@ -50,7 +57,7 @@
 
 | Track | Card | Slot (Brasília) |
 |---|---|---|
-| A | `A9` hosted: `/pay/:reference`, the status route and the flip, the webhook and resend | Sat 19:30–23:00 |
+| A | `A10` the Helius trigger; and `A9`'s deployed check (see above) | Sat 23:00–02:00 |
 | B | `B7` open: the scaffold and `/c/[id]` against a mock are on `main`, so `A8` can start. It stays on the mock until `A9` lands, then runs the test below | Sat 14:00–19:30 |
 | B | `B6`: record the phone and desktop takes on the deployed store | left for last, by B's choice; needed before `B10` (Sun 08:00) |
 
