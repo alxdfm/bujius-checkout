@@ -1,4 +1,4 @@
-import { findPayment, verifySplitPayment } from '@bujius/checkout-sdk';
+import { findPayments, verifySplitPayment } from '@bujius/checkout-sdk';
 import { PublicKey } from '@solana/web3.js';
 import { and, eq } from 'drizzle-orm';
 import {
@@ -9,6 +9,9 @@ import { getConnection, getSplitConfig, getSplitMint } from '../app/api/v1/charg
 import { getDb } from './db/client';
 import { charges, type Charge, type Merchant } from './db/schema';
 import { deliverWebhook, eventTypeFor } from './webhook';
+
+/** How many signatures one reconcile verifies: each is an RPC read. */
+export const MAX_SIGNATURES_VERIFIED = 5;
 
 export interface ReconcileResult {
   /** The charge as it stands now. */
@@ -55,9 +58,9 @@ async function reload(chargeId: string): Promise<Charge | undefined> {
 }
 
 /**
- * Reconcile on read: while a charge is `pending`, ask the chain. `findPayment` finds the
- * signature, but only `verifySplitPayment` decides (it checks the amount and the split). A payment
- * that does not verify leaves the charge as it is. Once `expires_at` + the grace has passed with no
+ * Reconcile on read: while a charge is `pending`, ask the chain. `findPayments` finds the
+ * signatures, but only `verifySplitPayment` decides (it checks the amount and the split). A payment
+ * that does not verify is skipped, and the charge stays as it is if none does. Once `expires_at` + the grace has passed with no
  * payment, `expired` is written. Throws `RPC_UNAVAILABLE` when the chain cannot be read.
  */
 export async function reconcileCharge(charge: Charge, merchant: Merchant): Promise<ReconcileResult> {
@@ -65,22 +68,26 @@ export async function reconcileCharge(charge: Charge, merchant: Merchant): Promi
 
   const connection = getConnection();
   const reference = new PublicKey(charge.reference);
-  const signature = await findPayment(connection, reference);
+  // Anyone holding the reference can send another amount first, so every signature is verified
+  // (earliest first, a few at most) and the first that checks out wins.
+  const signatures = (await findPayments(connection, reference)).slice(0, MAX_SIGNATURES_VERIFIED);
 
-  if (signature) {
+  if (signatures.length > 0) {
     const config = await getSplitConfig(merchant.splitConfig);
-    const verification = await verifySplitPayment(
-      connection,
-      signature,
-      config,
-      BigInt(charge.amount),
-      reference,
-      charge.expiresAt,
-    );
-    if (verification.status === 'paid' || verification.status === 'paid_late') {
-      const flipped = await flip(charge.id, verification.status, signature);
-      if (flipped) return { charge: flipped, flipped };
-      return { charge: (await reload(charge.id)) ?? charge, flipped: null };
+    for (const signature of signatures) {
+      const verification = await verifySplitPayment(
+        connection,
+        signature,
+        config,
+        BigInt(charge.amount),
+        reference,
+        charge.expiresAt,
+      );
+      if (verification.status === 'paid' || verification.status === 'paid_late') {
+        const flipped = await flip(charge.id, verification.status, signature);
+        if (flipped) return { charge: flipped, flipped };
+        return { charge: (await reload(charge.id)) ?? charge, flipped: null };
+      }
     }
   }
 
