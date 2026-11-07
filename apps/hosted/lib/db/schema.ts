@@ -14,8 +14,8 @@ import {
 export const CHARGE_STATUSES = ['pending', 'paid', 'paid_late', 'expired'] as const;
 export type ChargeStatus = (typeof CHARGE_STATUSES)[number];
 
-/** `mch_…` / `ch_…` ids: a prefix and 12 random bytes. */
-export function newId(prefix: 'mch' | 'ch'): string {
+/** `mch_…` / `ch_…` / `whd_…` ids: a prefix and 12 random bytes. */
+export function newId(prefix: 'mch' | 'ch' | 'whd'): string {
   return `${prefix}_${randomBytes(12).toString('hex')}`;
 }
 
