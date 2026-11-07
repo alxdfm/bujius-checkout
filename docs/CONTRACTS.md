@@ -119,6 +119,7 @@ Works in Node and in the browser. Errors are typed codes, never sentences.
 | `fetchSplitConfig` | connection, address | `{ address, authority, id, mint, recipients[{ wallet, bps }] }` | A |
 | `buildCreateSplit` | connection, authority, id, mint, recipients | an unsigned `Transaction` — creates every destination ATA, then `create_split` | A |
 | `findPayment` | connection, reference | the first successful signature at `confirmed`, or `null` | A |
+| `findPayments` | connection, reference | every successful signature at `confirmed`, earliest first — so a wrong amount sent first does not hide the right payment | A |
 | `verifySplitPayment` | connection, signature, config, amount, reference, `expiresAt?` | `{ status: 'paid' \| 'paid_late' \| 'invalid', reason?, legs[{ wallet, amount }] }` | A |
 | `BujiusCheckoutError` + `ErrorCode` | — | the codes below | A0 creates, each owner appends |
 
