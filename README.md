@@ -16,6 +16,7 @@ Built during the MLH Solana Hackathon (November 2026) as the open split primitiv
 | `@bujius/checkout-react` | [on npm](https://www.npmjs.com/package/@bujius/checkout-react) · [README](packages/react/README.md) |
 | Demo store (no database) | https://bujius-checkout.vercel.app |
 | Hosted checkout and API | https://bujius-checkout-hosted.vercel.app |
+| Demo video | https://www.youtube.com/watch?v=EQxgsmAmF4A |
 
 ## How it works
 
