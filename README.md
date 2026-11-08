@@ -18,6 +18,22 @@ Built during the MLH Solana Hackathon (November 2026) as the open split primitiv
 | Hosted checkout and API | https://bujius-checkout-hosted.vercel.app |
 | Demo video | https://www.youtube.com/watch?v=EQxgsmAmF4A |
 
+## Try the demo
+
+You need a wallet on **devnet** (Phantom, Solflare or Backpack, network set to Devnet) with a little
+test money:
+
+- devnet SOL for the fee: https://faucet.solana.com
+- devnet USDC (mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`): https://faucet.circle.com
+
+Then open the [demo store](https://bujius-checkout.vercel.app), add an item and pay at the cart: scan the
+QR with your phone wallet, or connect a browser wallet. "Pay through the hosted checkout" goes through the
+hosted service instead. The page turns **Paid** by itself, and the explorer link shows **one** transaction
+paying the merchant, the partner and the platform.
+
+Pay from a wallet that is **not** one of the split's recipients (the merchant, the partner or the platform
+of the test config `3gwKrgMCA8qNp7RXrpfPs63HB5wVFACYYQC39Vx3xr3N`): the SDK refuses a payer who is also a leg.
+
 ## How it works
 
 ![The payment flow: store, wallet, program and verifier](docs/architecture.svg)
